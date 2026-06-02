@@ -1,0 +1,6 @@
+analyzer:
+  errors:
+    invalid_annotation_target: ignore
+
+linter:
+  rules:
