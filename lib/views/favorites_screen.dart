@@ -95,9 +95,17 @@ class _FavoritesScreenState extends State<FavoritesScreen> implements JobView {
   void onFavoriteToggled(String jobId, bool isFav, String msg) {
     if (mounted) {
       _presenter.loadFavoriteJobs();
+      ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(msg, style: const TextStyle(fontFamily: 'Vazir')),
-        behavior: SnackBarBehavior.floating, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        content: Row(children: [
+          Icon(isFav ? Icons.bookmark : Icons.bookmark_border, color: Colors.white, size: 18),
+          const SizedBox(width: 8),
+          Expanded(child: Text(msg, style: const TextStyle(fontFamily: 'Vazir'))),
+        ]),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        backgroundColor: isFav ? const Color(0xFF4A90D9) : const Color(0xFF6C757D),
+        duration: const Duration(seconds: 2),
       ));
     }
   }
