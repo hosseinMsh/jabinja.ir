@@ -24,7 +24,11 @@ class _JobDetailScreenState extends State<JobDetailScreen> implements JobView {
     _presenter = JobPresenter(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final jobId = ModalRoute.of(context)?.settings.arguments as String?;
-      if (jobId != null) _presenter.loadJobDetail(jobId);
+      if (jobId != null) {
+        _presenter.loadJobDetail(jobId);
+      } else if (mounted) {
+        setState(() => _errorMessage = 'شناسه شغل نامعتبر است');
+      }
     });
   }
 
