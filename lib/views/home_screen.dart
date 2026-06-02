@@ -61,6 +61,7 @@ class _HomeScreenState extends State<HomeScreen> implements JobView {
     'دورکاری', 'پایتون', 'فلاتر', 'فرانت اند', 'هوش مصنوعی',
     'حسابدار', 'ادمین', 'منشی', 'فروشنده', 'سئو',
     'گرافیست', 'برنامه نویس', 'کارآموز', 'پشتیبان', 'React',
+    'جاوا', 'مدیر محصول', 'دواپس', 'پشتیبانی', 'حسابداری',
   ];
 
   @override
@@ -150,6 +151,9 @@ class _HomeScreenState extends State<HomeScreen> implements JobView {
         ),
         style: const TextStyle(fontFamily: 'Vazir', fontSize: 14),
         onSubmitted: (value) => _applyFilters(),
+        onChanged: (value) {
+          if (value.isEmpty) _applyFilters();
+        },
       ),
     );
   }
