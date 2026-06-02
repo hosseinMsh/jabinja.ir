@@ -137,6 +137,7 @@ class _HomeScreenState extends State<HomeScreen> implements JobView {
                   icon: const Icon(Icons.clear, color: Color(0xFFADB5BD)),
                   onPressed: () {
                     _searchController.clear();
+                    FocusScope.of(context).unfocus();
                     _applyFilters();
                   },
                 )
