@@ -145,6 +145,12 @@ class _LoginScreenState extends State<LoginScreen> implements AuthView {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'ورود با گوگل و لینکدین به زودی فعال خواهد شد',
+                    style: TextStyle(fontFamily: 'Vazir', fontSize: 10, color: Color(0xFFADB5BD)),
+                    textAlign: TextAlign.center,
+                  ),
                   const SizedBox(height: 24),
                   CustomButton(
                     text: 'ورود',
