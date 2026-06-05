@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'views/splash_screen.dart';
 import 'views/login_screen.dart';
 import 'views/signup_screen.dart';
 import 'views/home_screen.dart';
@@ -14,6 +15,7 @@ import 'views/contact_screen.dart';
 import 'views/how_to_screen.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const JobinjaApp());
 }
 
@@ -25,6 +27,12 @@ class JobinjaApp extends StatelessWidget {
     return MaterialApp(
       title: 'جابینجا',
       debugShowCheckedModeBanner: false,
+      builder: (context, child) {
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF4A90D9),
@@ -46,9 +54,33 @@ class JobinjaApp extends StatelessWidget {
             color: Color(0xFF212529),
           ),
         ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF4A90D9),
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: const Color(0xFFF8F9FA),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFDEE2E6)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFDEE2E6)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFF4A90D9), width: 2),
+          ),
+        ),
       ),
-      initialRoute: '/login',
+      initialRoute: '/splash',
       routes: {
+        '/splash': (context) => const SplashScreen(),
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const SignupScreen(),
         '/home': (context) => const HomeScreen(),
