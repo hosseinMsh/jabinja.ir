@@ -53,30 +53,17 @@ class _LoginScreenState extends State<LoginScreen> implements AuthView {
                       color: const Color(0xFFE8F0FE),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Icon(
-                      Icons.work_rounded,
-                      size: 40,
-                      color: Color(0xFF4A90D9),
-                    ),
+                    child: const Icon(Icons.work_rounded, size: 40, color: Color(0xFF4A90D9)),
                   ),
                   const SizedBox(height: 24),
                   const Text(
                     'ورود به جابینجا',
-                    style: TextStyle(
-                      fontFamily: 'Vazir',
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF212529),
-                    ),
+                    style: TextStyle(fontFamily: 'Vazir', fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF212529)),
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'به جمع کارجویان بپیوندید',
-                    style: TextStyle(
-                      fontFamily: 'Vazir',
-                      fontSize: 14,
-                      color: Color(0xFF6C757D),
-                    ),
+                    'با حساب واقعی خود وارد شوید',
+                    style: TextStyle(fontFamily: 'Vazir', fontSize: 14, color: Color(0xFF6C757D)),
                   ),
                   const SizedBox(height: 40),
                   CustomTextField(
@@ -91,84 +78,27 @@ class _LoginScreenState extends State<LoginScreen> implements AuthView {
                   CustomTextField(
                     controller: _passwordController,
                     labelText: 'رمز عبور',
-                    hintText: 'حداقل ۶ کاراکتر',
+                    hintText: 'رمز عبور حساب کاربری',
                     obscureText: _obscurePassword,
                     validator: Validators.validatePassword,
                     prefixIcon: const Icon(Icons.lock_outlined, color: Color(0xFFADB5BD)),
                     suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                        color: const Color(0xFFADB5BD),
-                      ),
+                      icon: Icon(_obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined, color: const Color(0xFFADB5BD)),
                       onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  const Row(
-                    textDirection: TextDirection.rtl,
-                    children: [
-                      Expanded(child: Divider()),
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16),
-                        child: Text('ورود سریع', style: TextStyle(fontFamily: 'Vazir', fontSize: 12, color: Color(0xFFADB5BD))),
-                      ),
-                      Expanded(child: Divider()),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () {},
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            side: const BorderSide(color: Color(0xFFDEE2E6)),
-                          ),
-                          icon: const Icon(Icons.g_mobiledata, color: Color(0xFFDB4437), size: 28),
-                          label: const Text('گوگل', style: TextStyle(fontFamily: 'Vazir', fontSize: 13, color: Color(0xFF495057))),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () {},
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            side: const BorderSide(color: Color(0xFFDEE2E6)),
-                          ),
-                          icon: const Icon(Icons.link, color: Color(0xFF0077B5), size: 28),
-                          label: const Text('لینکدین', style: TextStyle(fontFamily: 'Vazir', fontSize: 13, color: Color(0xFF495057))),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'ورود با گوگل و لینکدین به زودی فعال خواهد شد',
-                    style: TextStyle(fontFamily: 'Vazir', fontSize: 10, color: Color(0xFFADB5BD)),
-                    textAlign: TextAlign.center,
-                  ),
                   const SizedBox(height: 24),
-                  CustomButton(
-                    text: 'ورود',
-                    isLoading: _isLoading,
-                    onPressed: _handleLogin,
-                  ),
+                  CustomButton(text: 'ورود', isLoading: _isLoading, onPressed: _handleLogin),
                   const SizedBox(height: 16),
                   TextButton(
                     onPressed: () => Navigator.pushReplacementNamed(context, '/signup'),
-                    child: const Text(
-                      'حساب کاربری ندارید؟ ثبت‌نام کنید',
-                      style: TextStyle(fontFamily: 'Vazir', fontSize: 14, color: Color(0xFF4A90D9)),
-                    ),
+                    child: const Text('حساب کاربری ندارید؟ ثبت‌نام کنید', style: TextStyle(fontFamily: 'Vazir', fontSize: 14, color: Color(0xFF4A90D9))),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'test@test.com / 123456',
-                    style: const TextStyle(fontFamily: 'Vazir', fontSize: 11, color: Color(0xFFADB5BD)),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'ورود آزمایشی و داده mock حذف شده است؛ اطلاعات از API دریافت می‌شود.',
+                    style: TextStyle(fontFamily: 'Vazir', fontSize: 11, color: Color(0xFFADB5BD)),
+                    textAlign: TextAlign.center,
                   ),
                 ],
               ),
@@ -181,43 +111,34 @@ class _LoginScreenState extends State<LoginScreen> implements AuthView {
 
   void _handleLogin() {
     if (_formKey.currentState!.validate()) {
-      _presenter.login(
-        _emailController.text.trim(),
-        _passwordController.text,
-      );
+      _presenter.login(_emailController.text.trim(), _passwordController.text);
     }
   }
 
   @override
   void onLoginSuccess(User user) {
-    if (mounted) {
-      Navigator.pushReplacementNamed(context, '/home');
-    }
+    if (mounted) Navigator.pushReplacementNamed(context, '/home');
   }
 
   @override
   void onLoginError(String message) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: const Color(0xFFE74C3C),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-      );
-    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: const TextStyle(fontFamily: 'Vazir')),
+        backgroundColor: const Color(0xFFE74C3C),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
   }
 
   @override
   void onSignupSuccess(User user) {}
-
   @override
   void onSignupError(String message) {}
-
   @override
   void onLogoutSuccess() {}
-
   @override
   void onLogoutError(String message) {}
 
