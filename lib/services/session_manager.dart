@@ -19,24 +19,32 @@ class SessionManager {
 
   Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_tokenKey);
+    final token = prefs.getString(_tokenKey);
+    return token == null || token.isEmpty ? null : token;
   }
 
-  Future<User?> getUser() async {
+  Future<User?> getCachedUser() async {
     final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_userKey);
-    if (raw == null || raw.isEmpty) return null;
+    final rawUser = prefs.getString(_userKey);
+    if (rawUser == null || rawUser.isEmpty) return null;
     try {
-      return User.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+      final decoded = jsonDecode(rawUser);
+      if (decoded is Map<String, dynamic>) {
+        return User.fromJson(decoded);
+      }
+      if (decoded is Map) {
+        return User.fromJson(Map<String, dynamic>.from(decoded));
+      }
     } catch (_) {
       await clearSession();
-      return null;
     }
+    return null;
   }
 
-  Future<bool> hasSession() async {
+  Future<bool> isLoggedIn() async {
     final token = await getToken();
-    return token != null && token.isNotEmpty;
+    final user = await getCachedUser();
+    return token != null && user != null;
   }
 
   Future<void> clearSession() async {
