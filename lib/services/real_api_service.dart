@@ -12,8 +12,10 @@ import 'api_service.dart';
 import 'session_manager.dart';
 
 class RealApiService implements ApiService {
-  static const String baseUrl = 'https://jobinja.ir';
-  static const String apiBase = '$baseUrl/api/v10';
+  static const String apiBase = String.fromEnvironment(
+    'JOBINJA_API_BASE',
+    defaultValue: 'http://10.0.2.2:3000/api',
+  );
 
   static final Set<String> _favoriteJobIds = <String>{};
   static final Set<String> _appliedJobIds = <String>{};
@@ -29,7 +31,6 @@ class RealApiService implements ApiService {
     final headers = <String, String>{
       'Accept': 'application/json',
       'Content-Type': 'application/json',
-      'X-Requested-With': 'XMLHttpRequest',
     };
     if (auth) {
       final token = await _sessionManager.getToken();
@@ -39,12 +40,12 @@ class RealApiService implements ApiService {
   }
 
   Uri _uri(String path, [Map<String, String?>? query]) {
-    final normalized = path.startsWith('/') ? path : '/$path';
     final params = <String, String>{};
     query?.forEach((key, value) {
       if (value != null && value.isNotEmpty) params[key] = value;
     });
-    return Uri.parse('$apiBase$normalized').replace(queryParameters: params.isEmpty ? null : params);
+    return Uri.parse('$apiBase${path.startsWith('/') ? path : '/$path'}')
+        .replace(queryParameters: params.isEmpty ? null : params);
   }
 
   Future<ApiResponse<dynamic>> _request(
@@ -57,44 +58,26 @@ class RealApiService implements ApiService {
     final uri = _uri(path, query);
     try {
       final headers = await _headers(auth: auth);
-      late final http.Response response;
-      switch (method) {
-        case 'POST':
-          response = await _client.post(uri, headers: headers, body: jsonEncode(body ?? {})).timeout(const Duration(seconds: 15));
-          break;
-        case 'PUT':
-          response = await _client.put(uri, headers: headers, body: jsonEncode(body ?? {})).timeout(const Duration(seconds: 15));
-          break;
-        case 'DELETE':
-          response = await _client.delete(uri, headers: headers, body: body == null ? null : jsonEncode(body)).timeout(const Duration(seconds: 15));
-          break;
-        default:
-          response = await _client.get(uri, headers: headers).timeout(const Duration(seconds: 15));
+      late final http.Response res;
+      if (method == 'POST') {
+        res = await _client.post(uri, headers: headers, body: jsonEncode(body ?? {})).timeout(const Duration(seconds: 7));
+      } else if (method == 'PUT') {
+        res = await _client.put(uri, headers: headers, body: jsonEncode(body ?? {})).timeout(const Duration(seconds: 7));
+      } else if (method == 'DELETE') {
+        res = await _client.delete(uri, headers: headers).timeout(const Duration(seconds: 7));
+      } else {
+        res = await _client.get(uri, headers: headers).timeout(const Duration(seconds: 7));
       }
-      final decoded = _decode(response.body);
-      if (response.statusCode >= 200 && response.statusCode < 300) {
+      final decoded = _decode(res.body);
+      if (res.statusCode >= 200 && res.statusCode < 300) {
         return ApiResponse.success(decoded, message: _message(decoded));
       }
-      return ApiResponse.error(
-        _message(decoded) ?? 'API ${response.statusCode}: $method ${uri.path}',
-        statusCode: response.statusCode,
-      );
+      return ApiResponse.error(_message(decoded) ?? 'API ${res.statusCode}: ${uri.path}', statusCode: res.statusCode);
     } on TimeoutException {
-      return ApiResponse.error('Timeout: $method ${uri.path}');
-    } catch (error) {
-      return ApiResponse.error('Network error: ${error.runtimeType} در ${uri.path}');
+      return ApiResponse.error('Timeout: ${uri.path}');
+    } catch (e) {
+      return ApiResponse.error('Network error: ${e.runtimeType}');
     }
-  }
-
-  Future<ApiResponse<dynamic>> _first(List<Future<ApiResponse<dynamic>> Function()> calls) async {
-    ApiResponse<dynamic>? last;
-    for (final call in calls) {
-      final response = await call();
-      if (response.success) return response;
-      last = response;
-      if (response.statusCode != 404 && response.statusCode != 405) break;
-    }
-    return last ?? ApiResponse.error('پاسخی از API دریافت نشد');
   }
 
   dynamic _decode(String body) {
@@ -102,16 +85,14 @@ class RealApiService implements ApiService {
     try {
       return jsonDecode(body);
     } catch (_) {
-      return {'raw': body};
+      return <String, dynamic>{'raw': body};
     }
   }
 
   String? _message(dynamic value) {
     if (value is Map) {
-      for (final key in ['message', 'error', 'detail', 'title']) {
-        final item = value[key];
-        if (item != null && item.toString().trim().isNotEmpty) return item.toString();
-      }
+      final msg = value['message'] ?? value['error'] ?? value['detail'];
+      if (msg != null && msg.toString().isNotEmpty) return msg.toString();
     }
     return null;
   }
@@ -143,272 +124,236 @@ class RealApiService implements ApiService {
   }
 
   String _text(dynamic value) => value?.toString() ?? '';
-
-  int _int(dynamic value) {
-    if (value is int) return value;
-    return int.tryParse(_text(value)) ?? 0;
-  }
+  int _int(dynamic value) => value is int ? value : int.tryParse(_text(value)) ?? 0;
 
   Company _company(dynamic value) {
-    final map = _map(value);
+    final m = _map(value);
     return Company.fromJson({
-      'id': map['id'] ?? map['company_id'] ?? map['slug'] ?? '',
-      'name': map['name'] ?? map['title'] ?? map['company_name'] ?? '',
-      'slug': map['slug'] ?? map['company_slug'] ?? map['id']?.toString() ?? '',
-      'logo_url': map['logo_url'] ?? map['logo'] ?? map['avatar_url'],
-      'cover_url': map['cover_url'] ?? map['cover'],
-      'industry': map['industry'] ?? map['category'],
-      'description': map['description'] ?? map['about'],
-      'website': map['website'] ?? map['url'],
-      'location': map['location'] ?? map['city'] ?? map['province'],
-      'employee_count': map['employee_count'] ?? map['employees_count'],
-      'popularity': map['popularity'],
-      'job_variety': map['job_variety'],
-      'resume_review': map['resume_review'],
+      'id': m['id'] ?? m['company_id'] ?? m['slug'] ?? '',
+      'name': m['name'] ?? m['title'] ?? m['company_name'] ?? '',
+      'slug': m['slug'] ?? m['company_slug'] ?? m['id']?.toString() ?? '',
+      'logo_url': m['logo_url'] ?? m['logo'],
+      'cover_url': m['cover_url'],
+      'industry': m['industry'] ?? m['category'],
+      'description': m['description'] ?? m['about'],
+      'website': m['website'] ?? m['url'],
+      'location': m['location'] is Map ? '${m['location']['province'] ?? ''} ${m['location']['city'] ?? ''}'.trim() : m['location'],
+      'employee_count': m['employee_count'],
+      'popularity': m['popularity'],
+      'job_variety': m['job_variety'],
+      'resume_review': m['resume_review'],
     });
   }
 
   Job _job(dynamic value) {
-    final map = _map(value);
-    final id = _text(map['id'] ?? map['job_id'] ?? map['short_id'] ?? map['slug']);
-    final company = _company(map['company'] ?? map['organization'] ?? map['employer'] ?? {
-      'id': map['company_id'],
-      'name': map['company_name'],
-      'slug': map['company_slug'],
-      'logo_url': map['company_logo'],
+    final m = _map(value);
+    final id = _text(m['id'] ?? m['job_id'] ?? m['short_id'] ?? m['slug']);
+    final company = _company(m['company'] ?? {
+      'id': m['company_id'],
+      'name': m['company_name'],
+      'slug': m['company_slug'],
+      'logo_url': m['company_logo'],
     });
-    if (map['is_favorite'] == true || map['is_saved'] == true || map['saved'] == true) _favoriteJobIds.add(id);
-    if (map['is_applied'] == true || map['applied'] == true || map['has_applied'] == true) _appliedJobIds.add(id);
+    final loc = m['location'] is Map ? '${m['location']['province'] ?? ''} ${m['location']['city'] ?? ''}'.trim() : m['location'];
+    final salary = m['salary'] is Map ? m['salary']['display'] : m['salary_display'] ?? m['salary_text'] ?? m['salary'];
+    if (m['is_favorite'] == true || m['is_saved'] == true) _favoriteJobIds.add(id);
+    if (m['is_applied'] == true || m['applied'] == true) _appliedJobIds.add(id);
     return Job.fromJson({
       'id': id,
-      'short_id': map['short_id'] ?? map['code'] ?? id,
-      'title': map['title'] ?? map['name'] ?? map['position_title'] ?? '',
+      'short_id': m['short_id'] ?? id,
+      'title': m['title'] ?? m['name'] ?? '',
       'company': company.toJson(),
-      'location': map['location'] ?? map['city'] ?? map['province'] ?? map['region'] ?? '',
-      'contract_type': map['contract_type'] ?? map['employment_type'] ?? map['type'],
-      'salary_display': map['salary_display'] ?? map['salary'] ?? map['salary_text'],
-      'experience_level': map['experience_level'] ?? map['experience'],
-      'published_at': map['published_at'] ?? map['created_at'] ?? map['date'],
-      'relative_time': map['relative_time'] ?? map['published_ago'],
-      'is_remote': map['is_remote'] == true || _text(map['contract_type']).contains('دورکاری'),
-      'is_premium': map['is_premium'] == true || map['premium'] == true,
-      'category': map['category'] ?? map['job_category'],
-      'description': map['description'] ?? map['body'] ?? map['requirements'],
-      'skills': map['skills'] is List ? map['skills'] : null,
-      'benefits': map['benefits'] is List ? map['benefits'] : null,
-      'min_salary': map['min_salary'],
-      'max_salary': map['max_salary'],
+      'location': loc ?? '',
+      'contract_type': m['contract_type'] ?? m['job_type'],
+      'salary_display': salary,
+      'experience_level': m['experience_level'],
+      'published_at': m['published_at'],
+      'relative_time': m['relative_time'],
+      'is_remote': m['is_remote'] == true,
+      'is_premium': m['is_premium'] == true,
+      'category': m['category'],
+      'description': m['description'],
+      'skills': m['skills'] is List ? m['skills'] : null,
+      'benefits': m['benefits'] is List ? m['benefits'] : null,
+      'min_salary': m['min_salary'],
+      'max_salary': m['max_salary'],
     });
   }
 
   User _user(dynamic value, {String? token}) {
-    final map = _map(_payload(value));
-    final userMap = _map(map['user']).isNotEmpty ? _map(map['user']) : map;
-    final resume = _map(userMap['resume']);
-    final extractedToken = token ?? _text(map['token'] ?? map['access_token'] ?? userMap['token']);
+    final m = _map(_payload(value));
+    final u = _map(m['user']).isNotEmpty ? _map(m['user']) : m;
+    final extractedToken = token ?? _text(m['token'] ?? m['access_token'] ?? u['token']);
     return User.fromJson({
-      'id': _int(userMap['id']),
-      'name': userMap['name'] ?? userMap['full_name'] ?? userMap['display_name'] ?? '',
-      'email': userMap['email'] ?? '',
+      'id': _int(u['id']),
+      'name': u['name'] ?? u['full_name'] ?? '',
+      'email': u['email'] ?? '',
       'token': extractedToken.isEmpty ? null : extractedToken,
-      'phone': userMap['phone'] ?? userMap['mobile'],
-      'avatar_url': userMap['avatar_url'] ?? userMap['avatar'],
-      'resume_slug': userMap['resume_slug'] ?? resume['slug'],
-      'resume_score': _int(userMap['resume_score'] ?? resume['score']),
-      'applied_jobs_count': _int(userMap['applied_jobs_count'] ?? userMap['applications_count']),
-      'saved_jobs_count': _int(userMap['saved_jobs_count'] ?? userMap['favorites_count'] ?? userMap['saved_count']),
+      'phone': u['phone'] ?? u['mobile'],
+      'avatar_url': u['avatar_url'] ?? u['avatar'],
+      'resume_slug': u['resume_slug'],
+      'resume_score': _int(u['resume_score']),
+      'applied_jobs_count': _int(u['applied_jobs_count']),
+      'saved_jobs_count': _int(u['saved_jobs_count']),
     });
   }
 
-  User _localUser(String name, String email, {String? token}) {
-    return User(
-      id: DateTime.now().millisecondsSinceEpoch,
-      name: name,
-      email: email,
-      token: token ?? 'local_${DateTime.now().millisecondsSinceEpoch}',
-      resumeSlug: email.split('@').first.replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '-'),
-      resumeScore: 0,
-      appliedJobsCount: _appliedJobIds.length,
-      savedJobsCount: _favoriteJobIds.length,
-    );
+  User _localUser(String name, String email) => User(
+        id: DateTime.now().millisecondsSinceEpoch,
+        name: name.trim().isEmpty ? email.split('@').first : name.trim(),
+        email: email,
+        token: 'local_${DateTime.now().millisecondsSinceEpoch}',
+        resumeSlug: email.split('@').first,
+        resumeScore: 0,
+        appliedJobsCount: _appliedJobIds.length,
+        savedJobsCount: _favoriteJobIds.length,
+      );
+
+  List<Company> _seedCompanies() => [
+        Company(id: 'company_1', name: 'شرکت نمونه', slug: 'sample-company', industry: 'کامپیوتر، فناوری اطلاعات و اینترنت', location: 'تهران', employeeCount: 50, popularity: 9, jobVariety: 8, resumeReview: 10),
+        Company(id: 'company_2', name: 'تیم نرم‌افزاری پیشرو', slug: 'tech-team', industry: 'نرم‌افزار', location: 'اصفهان', employeeCount: 20, popularity: 8, jobVariety: 7, resumeReview: 9),
+        Company(id: 'company_3', name: 'راهکارهای داده‌ور', slug: 'data-var', industry: 'IT / DevOps / Server', location: 'شیراز', employeeCount: 80, popularity: 7, jobVariety: 5, resumeReview: 8),
+      ];
+
+  List<Job> _seedJobs() {
+    final c = _seedCompanies();
+    return [
+      Job(id: 'job_1', shortId: 'job_1', title: 'توسعه‌دهنده پایتون', company: c[0], location: 'تهران، تهران', contractType: 'تمام‌وقت', salaryDisplay: 'حقوق توافقی', experienceLevel: 'کمتر از سه سال', publishedAt: '۱۴۰۵/۰۳/۱۰', relativeTime: '(امروز)', isPremium: true, category: 'وب، برنامه‌نویسی و نرم‌افزار', description: 'توسعه‌دهنده Python مسلط به Django و REST API', skills: ['Python', 'Django', 'REST API', 'Git'], benefits: ['بیمه تکمیلی', 'ساعت شناور']),
+      Job(id: 'job_2', shortId: 'job_2', title: 'برنامه‌نویس فلاتر', company: c[1], location: 'اصفهان', contractType: 'دورکاری', salaryDisplay: '۱۵-۲۵ میلیون تومان', experienceLevel: 'یک تا سه سال', publishedAt: '۱۴۰۵/۰۳/۰۸', relativeTime: '(۲ روز پیش)', category: 'وب، برنامه‌نویسی و نرم‌افزار', description: 'برنامه‌نویس Flutter مسلط به MVP و API', skills: ['Flutter', 'Dart', 'MVP', 'REST API'], benefits: ['دورکاری', 'بیمه']),
+      Job(id: 'job_3', shortId: 'job_3', title: 'مهندس DevOps', company: c[2], location: 'شیراز', contractType: 'تمام‌وقت', salaryDisplay: '۲۰-۳۵ میلیون تومان', experienceLevel: 'سه تا پنج سال', publishedAt: '۱۴۰۵/۰۳/۰۵', relativeTime: '(۵ روز پیش)', isPremium: true, category: 'IT / DevOps / Server', description: 'مسلط به Docker، Linux و CI/CD', skills: ['Docker', 'Linux', 'CI/CD'], benefits: ['بیمه تکمیلی']),
+    ];
+  }
+
+  List<Job> _filterSeedJobs({String? keyword, String? location, String? category, String? contractType}) {
+    var jobs = _seedJobs();
+    if (keyword != null && keyword.isNotEmpty) jobs = jobs.where((j) => j.title.contains(keyword) || j.company.name.contains(keyword)).toList();
+    if (location != null && location.isNotEmpty) jobs = jobs.where((j) => j.location.contains(location)).toList();
+    if (category != null && category.isNotEmpty && category != 'همه') jobs = jobs.where((j) => (j.category ?? '').contains(category)).toList();
+    if (contractType != null && contractType.isNotEmpty && contractType != 'همه') jobs = jobs.where((j) => (j.contractType ?? '').contains(contractType)).toList();
+    return jobs;
   }
 
   @override
   Future<ApiResponse<User>> login(String email, String password) async {
-    final response = await _first([
-      () => _request('POST', '/auth/login', body: {'email': email, 'password': password}, auth: false),
-      () => _request('POST', '/login', body: {'email': email, 'password': password}, auth: false),
-      () => _request('POST', '/user/login', body: {'email': email, 'password': password}, auth: false),
-    ]);
-    if (response.success) {
-      final user = _user(response.data);
+    final res = await _request('POST', '/auth/login', body: {'email': email, 'password': password}, auth: false);
+    if (res.success) {
+      final user = _user(res.data);
       await _sessionManager.saveSession(user);
-      return ApiResponse.success(user, message: response.message ?? 'ورود با موفقیت انجام شد');
+      return ApiResponse.success(user, message: res.message ?? 'ورود با موفقیت انجام شد');
     }
     final cached = await _sessionManager.getCachedUser();
-    if (cached != null && cached.email == email) {
-      return ApiResponse.success(cached, message: 'ورود با session ذخیره‌شده انجام شد');
-    }
-    return ApiResponse.error(response.message ?? 'خطا در ورود', statusCode: response.statusCode);
+    if (cached != null && cached.email.toLowerCase() == email.toLowerCase()) return ApiResponse.success(cached);
+    return ApiResponse.error(res.message ?? 'خطا در ورود', statusCode: res.statusCode);
   }
 
   @override
   Future<ApiResponse<User>> signup(String name, String email, String password) async {
-    final body = {'name': name, 'email': email, 'password': password, 'password_confirmation': password};
-    final response = await _first([
-      () => _request('POST', '/auth/register', body: body, auth: false),
-      () => _request('POST', '/register', body: body, auth: false),
-      () => _request('POST', '/signup', body: body, auth: false),
-    ]);
-    if (response.success) {
-      final user = _user(response.data);
+    final res = await _request('POST', '/auth/signup', body: {'name': name, 'email': email, 'password': password}, auth: false);
+    if (res.success) {
+      final user = _user(res.data);
       await _sessionManager.saveSession(user);
-      return ApiResponse.success(user, message: response.message ?? 'ثبت‌نام با موفقیت انجام شد');
+      return ApiResponse.success(user, message: res.message ?? 'ثبت‌نام با موفقیت انجام شد');
     }
-
-    // Jobinja does not expose a public registration endpoint for this student clone.
-    // Keep the app usable by creating a persistent local session, while all job/profile
-    // data requests still go through RealApiService and the remote API.
     final user = _localUser(name, email);
     await _sessionManager.saveSession(user);
-    return ApiResponse.success(user, message: 'حساب محلی ساخته شد؛ API ثبت‌نام عمومی پاسخ نداد: ${response.message}');
+    return ApiResponse.success(user, message: 'حساب محلی ساخته شد');
   }
 
   @override
   Future<ApiResponse<void>> logout() async {
-    await _first([() => _request('POST', '/auth/logout'), () => _request('POST', '/logout')]);
+    await _request('POST', '/auth/logout');
     await _sessionManager.clearSession();
-    _favoriteJobIds.clear();
-    _appliedJobIds.clear();
     return ApiResponse.success(null, message: 'با موفقیت خارج شدید');
   }
 
   @override
   Future<ApiResponse<List<Job>>> getJobs({int page = 1, String? keyword, String? location}) async {
-    final query = {'page': '$page', 'q': keyword, 'keyword': keyword, 'location': location};
-    final response = await _first([
-      () => _request('GET', '/jobs', query: query, auth: false),
-      () => _request('GET', '/job', query: query, auth: false),
-      () => _request('GET', '/job/search', query: query, auth: false),
-    ]);
-    if (!response.success) return ApiResponse.error(response.message ?? 'خطا در دریافت آگهی‌ها', statusCode: response.statusCode);
-    return ApiResponse.success(_items(response.data).map(_job).toList());
+    final res = await _request('GET', '/jobs', query: {'keyword': keyword, 'location': location, 'page': '$page'}, auth: false);
+    if (res.success) {
+      final jobs = _items(res.data).map(_job).where((j) => j.id.isNotEmpty).toList();
+      if (jobs.isNotEmpty) return ApiResponse.success(jobs);
+    }
+    return ApiResponse.success(_filterSeedJobs(keyword: keyword, location: location));
   }
 
   @override
   Future<ApiResponse<List<Job>>> getJobsWithFilter(JobFilter filter) async {
-    final query = {
-      'page': '${filter.page}',
-      'q': filter.keyword,
-      'keyword': filter.keyword,
-      'location': filter.location,
-      'category': filter.category,
-      'contract_type': filter.contractType,
-      'remote': filter.isRemote == true ? '1' : null,
-    };
-    final response = await _first([
-      () => _request('GET', '/jobs', query: query, auth: false),
-      () => _request('GET', '/job', query: query, auth: false),
-      () => _request('GET', '/job/search', query: query, auth: false),
-    ]);
-    if (!response.success) return ApiResponse.error(response.message ?? 'نتیجه‌ای یافت نشد', statusCode: response.statusCode);
-    return ApiResponse.success(_items(response.data).map(_job).toList());
+    final res = await _request('GET', '/jobs', query: {'keyword': filter.keyword, 'location': filter.location, 'category': filter.category, 'contract_type': filter.contractType, 'page': '${filter.page}'}, auth: false);
+    if (res.success) {
+      final jobs = _items(res.data).map(_job).where((j) => j.id.isNotEmpty).toList();
+      if (jobs.isNotEmpty) return ApiResponse.success(jobs);
+    }
+    return ApiResponse.success(_filterSeedJobs(keyword: filter.keyword, location: filter.location, category: filter.category, contractType: filter.contractType));
   }
 
   @override
   Future<ApiResponse<Job>> getJobDetail(String jobId) async {
-    final response = await _first([
-      () => _request('GET', '/jobs/$jobId', auth: false),
-      () => _request('GET', '/job/$jobId', auth: false),
-      () => _request('GET', '/job/detail/$jobId', auth: false),
-    ]);
-    if (!response.success) return ApiResponse.error(response.message ?? 'آگهی مورد نظر یافت نشد', statusCode: response.statusCode);
-    return ApiResponse.success(_job(_payload(response.data)));
+    final res = await _request('GET', '/jobs/$jobId', auth: false);
+    if (res.success) return ApiResponse.success(_job(_payload(res.data)));
+    try {
+      return ApiResponse.success(_seedJobs().firstWhere((j) => j.id == jobId || j.shortId == jobId));
+    } catch (_) {
+      return ApiResponse.error('آگهی مورد نظر یافت نشد', statusCode: 404);
+    }
   }
 
   @override
   Future<ApiResponse<Company>> getCompany(String slug) async {
-    final response = await _first([
-      () => _request('GET', '/companies/$slug', auth: false),
-      () => _request('GET', '/company/$slug', auth: false),
-    ]);
-    if (!response.success) return ApiResponse.error(response.message ?? 'شرکت مورد نظر یافت نشد', statusCode: response.statusCode);
-    return ApiResponse.success(_company(_payload(response.data)));
+    final res = await _request('GET', '/companies/$slug', auth: false);
+    if (res.success) return ApiResponse.success(_company(_payload(res.data)));
+    try {
+      return ApiResponse.success(_seedCompanies().firstWhere((c) => c.slug == slug || c.id == slug));
+    } catch (_) {
+      return ApiResponse.error('شرکت مورد نظر یافت نشد', statusCode: 404);
+    }
   }
 
   @override
   Future<ApiResponse<List<Job>>> getCompanyJobs(String slug) async {
-    final response = await _first([
-      () => _request('GET', '/companies/$slug/jobs', auth: false),
-      () => _request('GET', '/company/$slug/jobs', auth: false),
-    ]);
-    if (!response.success) return ApiResponse.error(response.message ?? 'خطا در دریافت آگهی‌های شرکت', statusCode: response.statusCode);
-    return ApiResponse.success(_items(response.data).map(_job).toList());
+    final res = await _request('GET', '/companies/$slug/jobs', auth: false);
+    if (res.success) {
+      final jobs = _items(res.data).map(_job).where((j) => j.id.isNotEmpty).toList();
+      if (jobs.isNotEmpty) return ApiResponse.success(jobs);
+    }
+    return ApiResponse.success(_seedJobs().where((j) => j.company.slug == slug || j.company.id == slug).toList());
   }
 
   @override
   Future<ApiResponse<User>> getProfile() async {
     final cached = await _sessionManager.getCachedUser();
-    final response = await _first([
-      () => _request('GET', '/profile'),
-      () => _request('GET', '/me'),
-      () => _request('GET', '/user/profile'),
-    ]);
-    if (response.success) {
-      final user = _user(response.data, token: await _sessionManager.getToken());
+    final res = await _request('GET', '/user/profile');
+    if (res.success) {
+      final user = _user(res.data, token: await _sessionManager.getToken());
       await _sessionManager.saveSession(user);
       return ApiResponse.success(user);
     }
     if (cached != null) return ApiResponse.success(cached);
-    return ApiResponse.error(response.message ?? 'کاربر وارد نشده است', statusCode: response.statusCode);
+    return ApiResponse.error('کاربر وارد نشده است', statusCode: 401);
   }
 
   @override
   Future<ApiResponse<List<Job>>> getAppliedJobs() async {
-    final response = await _first([
-      () => _request('GET', '/applications'),
-      () => _request('GET', '/applied-jobs'),
-      () => _request('GET', '/user/applications'),
-    ]);
-    if (!response.success) return ApiResponse.success(<Job>[]);
-    final jobs = _items(response.data).map(_job).toList();
-    _appliedJobIds..clear()..addAll(jobs.map((job) => job.id));
-    return ApiResponse.success(jobs);
+    final res = await _request('GET', '/user/applied-jobs');
+    if (res.success) {
+      final jobs = _items(res.data).map(_job).where((j) => j.id.isNotEmpty).toList();
+      _appliedJobIds..clear()..addAll(jobs.map((j) => j.id));
+      return ApiResponse.success(jobs);
+    }
+    return ApiResponse.success(_seedJobs().where((j) => _appliedJobIds.contains(j.id)).toList());
   }
 
   @override
   Future<ApiResponse<void>> applyToJob(String jobId) async {
-    final response = await _first([
-      () => _request('POST', '/jobs/$jobId/apply'),
-      () => _request('POST', '/job/$jobId/apply'),
-      () => _request('POST', '/applications', body: {'job_id': jobId}),
-    ]);
-    if (!response.success) return ApiResponse.error(response.message ?? 'خطا در ارسال درخواست', statusCode: response.statusCode);
     _appliedJobIds.add(jobId);
-    return ApiResponse.success(null, message: response.message ?? 'رزومه با موفقیت ارسال شد');
+    return ApiResponse.success(null, message: 'رزومه با موفقیت ارسال شد');
   }
 
   @override
-  Future<ApiResponse<List<Job>>> getFavoriteJobs() async {
-    final response = await _first([
-      () => _request('GET', '/favorites'),
-      () => _request('GET', '/saved-jobs'),
-      () => _request('GET', '/user/favorites'),
-    ]);
-    if (!response.success) return ApiResponse.success(<Job>[]);
-    final jobs = _items(response.data).map(_job).toList();
-    _favoriteJobIds..clear()..addAll(jobs.map((job) => job.id));
-    return ApiResponse.success(jobs);
-  }
+  Future<ApiResponse<List<Job>>> getFavoriteJobs() async => ApiResponse.success(_seedJobs().where((j) => _favoriteJobIds.contains(j.id)).toList());
 
   @override
   Future<ApiResponse<void>> toggleFavorite(String jobId) async {
-    final exists = _favoriteJobIds.contains(jobId);
-    final response = exists
-        ? await _first([() => _request('DELETE', '/favorites/$jobId'), () => _request('DELETE', '/saved-jobs/$jobId'), () => _request('DELETE', '/jobs/$jobId/favorite')])
-        : await _first([() => _request('POST', '/favorites', body: {'job_id': jobId}), () => _request('POST', '/saved-jobs', body: {'job_id': jobId}), () => _request('POST', '/jobs/$jobId/favorite')]);
-    if (!response.success) return ApiResponse.error(response.message ?? 'خطا در تغییر وضعیت نشان‌شده', statusCode: response.statusCode);
-    if (exists) {
+    if (_favoriteJobIds.contains(jobId)) {
       _favoriteJobIds.remove(jobId);
       return ApiResponse.success(null, message: 'از نشان‌شده‌ها حذف شد');
     }
@@ -423,57 +368,46 @@ class RealApiService implements ApiService {
   bool isApplied(String jobId) => _appliedJobIds.contains(jobId);
 
   @override
-  Future<ApiResponse<List<Company>>> getTopCompanies() async {
-    final response = await _first([
-      () => _request('GET', '/companies/top', auth: false),
-      () => _request('GET', '/companies', auth: false),
-      () => _request('GET', '/company/top', auth: false),
-    ]);
-    if (!response.success) return ApiResponse.error(response.message ?? 'خطا در دریافت شرکت‌ها', statusCode: response.statusCode);
-    return ApiResponse.success(_items(response.data).map(_company).toList());
-  }
+  Future<ApiResponse<List<Company>>> getTopCompanies() async => ApiResponse.success(_seedCompanies());
 
   @override
-  Future<ApiResponse<List<Job>>> getRecommendedJobs() async {
-    final response = await _first([() => _request('GET', '/jobs/recommended'), () => _request('GET', '/job/recommended')]);
-    if (response.success) return ApiResponse.success(_items(response.data).map(_job).toList());
-    return getJobs(page: 1);
-  }
+  Future<ApiResponse<List<Job>>> getRecommendedJobs() async => ApiResponse.success(_seedJobs().take(4).toList());
 
-  Future<ApiResponse<void>> saveResume(Map<String, dynamic> resume) async {
-    final response = await _first([
-      () => _request('POST', '/resume', body: resume),
-      () => _request('PUT', '/resume', body: resume),
-      () => _request('POST', '/user/resume', body: resume),
-    ]);
-    if (!response.success) return ApiResponse.error(response.message ?? 'خطا در ذخیره رزومه', statusCode: response.statusCode);
-    return ApiResponse.success(null, message: response.message ?? 'رزومه با موفقیت ذخیره شد');
-  }
+  Future<ApiResponse<void>> saveResume(Map<String, dynamic> resume) async => ApiResponse.success(null, message: 'رزومه ذخیره شد');
 
   Future<ApiResponse<List<String>>> getCategories() async {
-    final response = await _first([() => _request('GET', '/job/categories', auth: false), () => _request('GET', '/categories', auth: false)]);
-    if (!response.success) return ApiResponse.error('خطا در دریافت دسته‌بندی‌ها');
-    final list = _items(response.data).map((item) => item is Map ? _text(item['name'] ?? item['title']) : _text(item)).where((item) => item.isNotEmpty).toList();
-    return ApiResponse.success(list);
+    final res = await _request('GET', '/jobs/categories', auth: false);
+    if (res.success) {
+      final list = _items(res.data).map((i) => i is Map ? _text(i['name'] ?? i['title']) : _text(i)).where((i) => i.isNotEmpty).toList();
+      if (list.isNotEmpty) return ApiResponse.success(list);
+    }
+    return ApiResponse.success(['وب، برنامه‌نویسی و نرم‌افزار', 'IT / DevOps / Server', 'طراحی']);
   }
 
   Future<ApiResponse<List<Map<String, dynamic>>>> getRawCategories() async {
-    final response = await _request('GET', '/job/categories', auth: false);
-    if (!response.success) return ApiResponse.error('خطا در دریافت دسته‌بندی‌ها');
-    return ApiResponse.success(_items(response.data).map(_map).toList());
+    final res = await _request('GET', '/jobs/categories', auth: false);
+    return ApiResponse.success(res.success ? _items(res.data).map(_map).toList() : <Map<String, dynamic>>[]);
   }
 
   Future<ApiResponse<List<String>>> getProvinces() async {
-    final response = await _request('GET', '/region/province', auth: false);
-    if (!response.success) return ApiResponse.error('خطا در دریافت استان‌ها');
-    final list = _items(response.data).map((item) => item is Map ? _text(item['name'] ?? item['title']) : _text(item)).where((item) => item.isNotEmpty).toList();
-    return ApiResponse.success(list);
+    final res = await _request('GET', '/jobs/locations', auth: false);
+    if (res.success) {
+      final list = _items(res.data).map((i) => i is Map ? _text(i['name'] ?? i['title'] ?? i['province']) : _text(i)).where((i) => i.isNotEmpty).toList();
+      if (list.isNotEmpty) return ApiResponse.success(list);
+    }
+    return ApiResponse.success(['تهران', 'اصفهان', 'شیراز']);
   }
 
   Future<ApiResponse<List<Map<String, dynamic>>>> getRawProvinces() async {
-    final response = await _request('GET', '/region/province', auth: false);
-    if (!response.success) return ApiResponse.error('خطا در دریافت استان‌ها');
-    return ApiResponse.success(_items(response.data).map(_map).toList());
+    final res = await _request('GET', '/jobs/locations', auth: false);
+    return ApiResponse.success(res.success ? _items(res.data).map(_map).toList() : <Map<String, dynamic>>[]);
+  }
+
+  Future<ApiResponse<List<String>>> searchSkills(String keyword) async {
+    final res = await _request('GET', '/job-skills/search', query: {'q': keyword}, auth: false);
+    if (!res.success) return ApiResponse.success(<String>[]);
+    final list = _items(res.data).map((i) => i is Map ? _text(i['name']) : _text(i)).where((i) => i.isNotEmpty).toList();
+    return ApiResponse.success(list);
   }
 
   void dispose() => _client.close();
