@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/constants.dart';
 
 class CustomButton extends StatelessWidget {
   final String text;
@@ -8,6 +9,7 @@ class CustomButton extends StatelessWidget {
   final Color? textColor;
   final double? height;
   final double? width;
+  final double? borderRadius;
 
   const CustomButton({
     super.key,
@@ -18,6 +20,7 @@ class CustomButton extends StatelessWidget {
     this.textColor,
     this.height = 50,
     this.width,
+    this.borderRadius,
   });
 
   @override
@@ -28,13 +31,15 @@ class CustomButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: color ?? const Color(0xFF4A90D9),
-          foregroundColor: textColor ?? Colors.white,
-          disabledBackgroundColor: const Color(0xFFADB5BD),
+          backgroundColor: color ?? AppColors.primary,
+          foregroundColor: textColor ?? AppColors.surface,
+          disabledBackgroundColor: AppColors.textMuted,
+          disabledForegroundColor: AppColors.surface,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(borderRadius ?? AppRadius.md),
           ),
           elevation: 0,
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
         ),
         child: isLoading
             ? const SizedBox(
@@ -47,10 +52,11 @@ class CustomButton extends StatelessWidget {
               )
             : Text(
                 text,
-                style: const TextStyle(
-                  fontFamily: 'Vazir',
+                style: TextStyle(
+                  fontFamily: AppTypography.fontFamily,
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
+                  color: textColor ?? AppColors.surface,
                 ),
               ),
       ),
