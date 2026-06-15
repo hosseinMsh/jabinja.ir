@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/constants.dart';
 
 class HowToScreen extends StatelessWidget {
   const HowToScreen({super.key});
@@ -17,7 +18,7 @@ class HowToScreen extends StatelessWidget {
     {
       'icon': Icons.search_rounded,
       'title': 'شغل مورد نظر را پیدا کنید',
-      'description': 'می‌توانید عنوان شغلی یا نام شرکتی که می‌خواهید را در قسمت جستجو وارد کنید و آگهی‌ها را ببینید. همچنین می‌توانید بر اساس استان، دسته‌بندی و نوع همکاری فیلتر کنید.',
+      'description': 'می‌توانید عنوان شغلی یا نام شرکتی که می‌خواهید را در قسمت جستجو وارد کنید و آگهی‌ها را ببینید.',
     },
     {
       'icon': Icons.send_rounded,
@@ -39,13 +40,13 @@ class HowToScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('راهنمای استفاده', style: TextStyle(fontFamily: 'Vazir', fontSize: 18, fontWeight: FontWeight.bold)),
+        title: const Text('راهنمای استفاده'),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         elevation: 0,
-        foregroundColor: const Color(0xFF212529),
+        foregroundColor: AppColors.textPrimary,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -63,33 +64,55 @@ class HowToScreen extends StatelessWidget {
 
   Widget _buildHeader() {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [Color(0xFF4A90D9), Color(0xFF357ABD)]),
-        borderRadius: BorderRadius.circular(16),
+        gradient: const LinearGradient(
+          colors: [AppColors.primary, AppColors.primaryDark],
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+        ),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Column(children: [
         Container(
           width: 64, height: 64,
-          decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(16)),
+          decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(AppRadius.lg)),
           child: const Icon(Icons.help_outline, color: Colors.white, size: 36),
         ),
         const SizedBox(height: 16),
-        const Text('جابینجا چطور به استخدام شدن من کمک می‌کند؟', style: TextStyle(fontFamily: 'Vazir', fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white), textAlign: TextAlign.center),
+        const Text(
+          'جابینجا چطور به استخدام شدن من کمک می‌کند؟',
+          style: TextStyle(fontFamily: AppTypography.fontFamily, fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+          textAlign: TextAlign.center,
+        ),
         const SizedBox(height: 8),
-        const Text('با جابینجا در ۶ قدم ساده شغل دلخواه خود را پیدا کنید', style: TextStyle(fontFamily: 'Vazir', fontSize: 13, color: Colors.white70), textAlign: TextAlign.center),
+        const Text(
+          'با جابینجا در ۶ قدم ساده شغل دلخواه خود را پیدا کنید',
+          style: TextStyle(fontFamily: AppTypography.fontFamily, fontSize: 13, color: Colors.white70),
+          textAlign: TextAlign.center,
+        ),
       ]),
     );
   }
 
   Widget _buildStep(int index, Map<String, dynamic> step) {
+    final colors = [AppColors.primary, AppColors.accent, AppColors.amber, AppColors.purple, AppColors.lightBlue, AppColors.success];
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.border, width: 0.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         textDirection: TextDirection.rtl,
@@ -98,29 +121,41 @@ class HowToScreen extends StatelessWidget {
           Container(
             width: 44, height: 44,
             decoration: BoxDecoration(
-              color: const Color(0xFFE8F0FE),
-              borderRadius: BorderRadius.circular(12),
+              color: colors[index].withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: Center(
-              child: Text(
-                '${index + 1}',
-                style: const TextStyle(fontFamily: 'Vazir', fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF4A90D9)),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(step['icon'] as IconData, size: 16, color: colors[index]),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${index + 1}',
+                    style: TextStyle(
+                      fontFamily: AppTypography.fontFamily,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: colors[index],
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              Row(
-                textDirection: TextDirection.rtl,
-                children: [
-                  Icon(step['icon'] as IconData, size: 20, color: const Color(0xFF4A90D9)),
-                  const SizedBox(width: 6),
-                  Text(step['title'] as String, style: const TextStyle(fontFamily: 'Vazir', fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF212529))),
-                ],
+              Text(
+                step['title'] as String,
+                style: AppTypography.body.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              Text(step['description'] as String, style: const TextStyle(fontFamily: 'Vazir', fontSize: 13, color: Color(0xFF6C757D), height: 1.6), textAlign: TextAlign.right),
+              Text(
+                step['description'] as String,
+                style: AppTypography.bodySmall.copyWith(height: 1.6),
+                textAlign: TextAlign.right,
+              ),
             ]),
           ),
         ],
