@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/constants.dart';
 
 class CustomTextField extends StatelessWidget {
   final TextEditingController? controller;
@@ -38,39 +39,39 @@ class CustomTextField extends StatelessWidget {
         labelText: labelText,
         hintText: hintText,
         labelStyle: const TextStyle(
-          fontFamily: 'Vazir',
-          color: Color(0xFF6C757D),
+          fontFamily: AppTypography.fontFamily,
+          color: AppColors.textSecondary,
         ),
         hintStyle: const TextStyle(
-          fontFamily: 'Vazir',
-          color: Color(0xFFADB5BD),
+          fontFamily: AppTypography.fontFamily,
+          color: AppColors.textMuted,
         ),
         prefixIcon: prefixIcon,
         suffixIcon: suffixIcon,
         filled: true,
-        fillColor: const Color(0xFFF8F9FA),
+        fillColor: AppColors.background,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFDEE2E6)),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFDEE2E6)),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF4A90D9), width: 2),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderSide: const BorderSide(color: AppColors.primary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFE74C3C)),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderSide: const BorderSide(color: AppColors.error),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
       style: const TextStyle(
-        fontFamily: 'Vazir',
+        fontFamily: AppTypography.fontFamily,
         fontSize: 14,
-        color: Color(0xFF212529),
+        color: AppColors.textPrimary,
       ),
     );
   }
