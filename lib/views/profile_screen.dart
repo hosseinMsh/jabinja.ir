@@ -7,6 +7,7 @@ import '../models/job.dart';
 import '../models/user.dart';
 import '../widgets/loading_widget.dart';
 import '../widgets/job_card.dart';
+import '../utils/constants.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -39,30 +40,52 @@ class _ProfileScreenState extends State<ProfileScreen> implements ProfileView, J
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('پروفایل', style: TextStyle(fontFamily: 'Vazir', fontSize: 20, fontWeight: FontWeight.bold)),
+        title: const Text('پروفایل'),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         elevation: 0,
-        foregroundColor: const Color(0xFF212529),
+        foregroundColor: AppColors.textPrimary,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined, color: AppColors.textSecondary),
+            onPressed: () {},
+          ),
+        ],
       ),
       body: _isLoading
           ? const LoadingWidget(message: 'در حال بارگذاری...')
           : _errorMessage != null
               ? _buildErrorState()
-              : SingleChildScrollView(
-                  child: Column(children: [
-                    _buildProfileHeader(),
-                    const SizedBox(height: 8),
-                    _buildResumeSection(),
-                    const SizedBox(height: 8),
-                    _buildStatsRow(),
-                    const SizedBox(height: 8),
-                    if (_appliedJobs.isNotEmpty) _buildSection('شغل‌های اقدام شده', _appliedJobs),
-                    if (_favoriteJobs.isNotEmpty) _buildSection('نشان‌شده‌ها', _favoriteJobs),
-                    const SizedBox(height: 24),
-                  ]),
+              : RefreshIndicator(
+                  color: AppColors.primary,
+                  onRefresh: () async {
+                    _profilePresenter.loadProfile();
+                    _jobPresenter.loadAppliedJobs();
+                    _jobPresenter.loadFavoriteJobs();
+                  },
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: Column(children: [
+                      _buildProfileHeader(),
+                      const SizedBox(height: 8),
+                      _buildStatsSection(),
+                      const SizedBox(height: 8),
+                      _buildResumeSection(),
+                      const SizedBox(height: 8),
+                      _buildMenuSection(),
+                      if (_appliedJobs.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        _buildSection('درخواست‌های اخیر', _appliedJobs, '/applied-jobs'),
+                      ],
+                      if (_favoriteJobs.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        _buildSection('نشان‌شده‌ها', _favoriteJobs, '/favorites'),
+                      ],
+                      const SizedBox(height: 32),
+                    ]),
+                  ),
                 ),
     );
   }
@@ -72,14 +95,21 @@ class _ProfileScreenState extends State<ProfileScreen> implements ProfileView, J
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          const Icon(Icons.error_outline, size: 64, color: Color(0xFFADB5BD)),
+          Container(
+            width: 80, height: 80,
+            decoration: BoxDecoration(
+              color: AppColors.error.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Icon(Icons.error_outline, size: 40, color: AppColors.error),
+          ),
           const SizedBox(height: 16),
-          Text(_errorMessage!, style: const TextStyle(fontFamily: 'Vazir', fontSize: 14, color: Color(0xFF6C757D)), textAlign: TextAlign.center),
+          Text(_errorMessage!, style: AppTypography.body.copyWith(color: AppColors.textSecondary), textAlign: TextAlign.center),
           const SizedBox(height: 24),
           OutlinedButton.icon(
             onPressed: () { _profilePresenter.loadProfile(); _jobPresenter.loadAppliedJobs(); _jobPresenter.loadFavoriteJobs(); },
-            icon: const Icon(Icons.refresh),
-            label: const Text('تلاش مجدد', style: TextStyle(fontFamily: 'Vazir')),
+            icon: const Icon(Icons.refresh, size: 18),
+            label: const Text('تلاش مجدد', style: TextStyle(fontFamily: AppTypography.fontFamily)),
           ),
         ]),
       ),
@@ -90,131 +120,242 @@ class _ProfileScreenState extends State<ProfileScreen> implements ProfileView, J
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
-      color: Colors.white,
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        border: Border(
+          bottom: BorderSide(color: AppColors.divider),
+        ),
+      ),
       child: Column(children: [
-        CircleAvatar(
-          radius: 44,
-          backgroundColor: const Color(0xFFE8F0FE),
-          backgroundImage: _user?.avatarUrl != null && _user!.avatarUrl!.isNotEmpty
-              ? NetworkImage(_user!.avatarUrl!) : null,
-          child: _user?.avatarUrl == null || _user!.avatarUrl!.isEmpty
-              ? const Icon(Icons.person, size: 44, color: Color(0xFF4A90D9)) : null,
+        Stack(
+          children: [
+            CircleAvatar(
+              radius: 48,
+              backgroundColor: AppColors.primaryLight,
+              backgroundImage: _user?.avatarUrl != null && _user!.avatarUrl!.isNotEmpty
+                  ? NetworkImage(_user!.avatarUrl!) : null,
+              child: _user?.avatarUrl == null || _user!.avatarUrl!.isEmpty
+                  ? Text(
+                      (_user?.name ?? 'کاربر').substring(0, 1),
+                      style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: AppColors.primary),
+                    )
+                  : null,
+            ),
+            Positioned(
+              bottom: 0,
+              right: 0,
+              child: Container(
+                width: 28, height: 28,
+                decoration: const BoxDecoration(
+                  color: AppColors.primary,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.edit, size: 14, color: Colors.white),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
-        Text(_user?.name ?? 'کاربر', style: const TextStyle(fontFamily: 'Vazir', fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF212529))),
-        const SizedBox(height: 4),
-        Text(_user?.email ?? '', style: const TextStyle(fontFamily: 'Vazir', fontSize: 14, color: Color(0xFF6C757D))),
-        if (_user?.phone != null && _user!.phone!.isNotEmpty) ...[
-          const SizedBox(height: 4),
-          Text(_user!.phone!, style: const TextStyle(fontFamily: 'Vazir', fontSize: 13, color: Color(0xFFADB5BD))),
-        ],
-        const SizedBox(height: 20),
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: _handleLogout,
-            style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFFE74C3C),
-              side: const BorderSide(color: Color(0xFFE74C3C)),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              padding: const EdgeInsets.symmetric(vertical: 12),
-            ),
-            icon: const Icon(Icons.logout),
-            label: const Text('خروج از حساب', style: TextStyle(fontFamily: 'Vazir', fontSize: 14)),
-          ),
+        Text(
+          _user?.name ?? 'کاربر',
+          style: AppTypography.h2,
         ),
+        const SizedBox(height: 4),
+        Text(
+          _user?.email ?? '',
+          style: AppTypography.bodySmall,
+        ),
+        if (_user?.phone != null && _user!.phone!.isNotEmpty) ...[
+          const SizedBox(height: 2),
+          Text(
+            _user!.phone!,
+            style: AppTypography.caption,
+          ),
+        ],
       ]),
     );
+  }
+
+  Widget _buildStatsSection() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      color: AppColors.surface,
+      child: Row(
+        textDirection: TextDirection.rtl,
+        children: [
+          Expanded(child: _buildStatItem(Icons.send_outlined, 'درخواست‌ها', '${_user?.appliedJobsCount ?? 0}', AppColors.primary)),
+          Container(width: 1, height: 40, color: AppColors.divider),
+          Expanded(child: _buildStatItem(Icons.bookmark_outlined, 'نشان‌شده‌ها', '${_user?.savedJobsCount ?? 0}', AppColors.accent)),
+          Container(width: 1, height: 40, color: AppColors.divider),
+          Expanded(child: _buildStatItem(Icons.visibility_outlined, 'بازدید', '--', AppColors.amber)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatItem(IconData icon, String label, String value, Color color) {
+    return Column(children: [
+      Container(
+        width: 36, height: 36,
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+        ),
+        child: Icon(icon, size: 18, color: color),
+      ),
+      const SizedBox(height: 6),
+      Text(value, style: AppTypography.h3.copyWith(fontSize: 18)),
+      Text(label, style: AppTypography.caption),
+    ]);
   }
 
   Widget _buildResumeSection() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
-      color: Colors.white,
+      color: AppColors.surface,
       child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-        Row(textDirection: TextDirection.rtl, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          const Text('رزومه', style: TextStyle(fontFamily: 'Vazir', fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF212529))),
-          Icon(Icons.description_outlined, color: const Color(0xFF4A90D9)),
-        ]),
+        Row(
+          textDirection: TextDirection.rtl,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('رزومه', style: AppTypography.h4),
+            Container(
+              width: 32, height: 32,
+              decoration: BoxDecoration(
+                color: AppColors.primaryLight,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+              ),
+              child: const Icon(Icons.description_outlined, size: 18, color: AppColors.primary),
+            ),
+          ],
+        ),
         const SizedBox(height: 16),
         if (_user?.resumeScore != null) ...[
-          Row(textDirection: TextDirection.rtl, children: [
-            Text('امتیاز رزومه: ${_user!.resumeScore}%', style: const TextStyle(fontFamily: 'Vazir', fontSize: 14, color: Color(0xFF495057))),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(6),
-                child: LinearProgressIndicator(
-                  value: (_user!.resumeScore ?? 0) / 100,
-                  backgroundColor: const Color(0xFFE9ECEF),
-                  valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF4A90D9)),
-                  minHeight: 8,
+          Row(
+            textDirection: TextDirection.rtl,
+            children: [
+              Text(
+                'امتیاز رزومه: ${_user!.resumeScore}%',
+                style: AppTypography.bodySmall.copyWith(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: LinearProgressIndicator(
+                    value: (_user!.resumeScore ?? 0) / 100,
+                    backgroundColor: AppColors.border,
+                    valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                    minHeight: 8,
+                  ),
                 ),
               ),
-            ),
-          ]),
+            ],
+          ),
           const SizedBox(height: 12),
         ],
-        if (_user?.resumeSlug != null)
-          Row(textDirection: TextDirection.rtl, children: [
-            const Icon(Icons.link, size: 14, color: Color(0xFF6C757D)),
+        Row(
+          textDirection: TextDirection.rtl,
+          children: [
+            const Icon(Icons.link, size: 14, color: AppColors.textMuted),
             const SizedBox(width: 6),
-            Text('jobinja.ir/resume/${_user!.resumeSlug}', style: const TextStyle(fontFamily: 'Vazir', fontSize: 12, color: Color(0xFF4A90D9))),
-          ]),
+            Text(
+              _user?.resumeSlug != null ? 'jobinja.ir/resume/${_user!.resumeSlug}' : 'https://jobinja.ir/resume',
+              style: AppTypography.bodySmall.copyWith(color: AppColors.primary),
+            ),
+          ],
+        ),
       ]),
     );
   }
 
-  Widget _buildStatsRow() {
+  Widget _buildMenuSection() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      color: Colors.white,
-      child: Row(
-        textDirection: TextDirection.rtl,
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      color: AppColors.surface,
+      child: Column(
         children: [
-          Expanded(child: _buildStatItem(Icons.send_outlined, 'درخواست‌ها', '${_user?.appliedJobsCount ?? 0}')),
-          Container(width: 1, height: 40, color: const Color(0xFFDEE2E6)),
-          Expanded(child: _buildStatItem(Icons.bookmark_outlined, 'نشان‌شده‌ها', '${_user?.savedJobsCount ?? 0}')),
-          Container(width: 1, height: 40, color: const Color(0xFFDEE2E6)),
-          Expanded(child: _buildStatItem(Icons.visibility_outlined, 'بازدید پروفایل', '--')),
+          _buildMenuItem(Icons.search, 'جستجوی مشاغل', () => Navigator.pop(context)),
+          _buildMenuItem(Icons.description_outlined, 'رزومه‌ساز آنلاین', () => Navigator.pushNamed(context, '/resume-builder')),
+          _buildMenuItem(Icons.notifications_outlined, 'ایمیل اطلاع‌رسانی', () => Navigator.pushNamed(context, '/job-alert')),
+          _buildMenuItem(Icons.headset_mic, 'تماس با جابینجا', () => Navigator.pushNamed(context, '/contact')),
+          _buildMenuItem(Icons.info_outline, 'درباره جابینجا', () => Navigator.pushNamed(context, '/about')),
+          _buildMenuItem(Icons.help_outline, 'راهنمای استفاده', () => Navigator.pushNamed(context, '/how-to')),
+          const Divider(height: 1, color: AppColors.divider),
+          _buildMenuItem(Icons.logout, 'خروج از حساب', _handleLogout, isDestructive: true),
         ],
       ),
     );
   }
 
-  Widget _buildStatItem(IconData icon, String label, String value) {
-    return Column(children: [
-      Icon(icon, size: 22, color: const Color(0xFF4A90D9)),
-      const SizedBox(height: 6),
-      Text(value, style: const TextStyle(fontFamily: 'Vazir', fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF212529))),
-      Text(label, style: const TextStyle(fontFamily: 'Vazir', fontSize: 11, color: Color(0xFFADB5BD))),
-    ]);
+  Widget _buildMenuItem(IconData icon, String title, VoidCallback onTap, {bool isDestructive = false}) {
+    return ListTile(
+      trailing: Icon(
+        icon,
+        color: isDestructive ? AppColors.error : AppColors.textSecondary,
+        size: 22,
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontFamily: AppTypography.fontFamily,
+          fontSize: 14,
+          color: isDestructive ? AppColors.error : AppColors.textPrimary,
+        ),
+        textAlign: TextAlign.right,
+      ),
+      onTap: onTap,
+      dense: true,
+      minVerticalPadding: 8,
+    );
   }
 
-  Widget _buildSection(String title, List<Job> jobs) {
+  Widget _buildSection(String title, List<Job> jobs, String route) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
-      color: Colors.white,
+      color: AppColors.surface,
       child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-        Row(textDirection: TextDirection.rtl, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Text(title, style: const TextStyle(fontFamily: 'Vazir', fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF212529))),
-          TextButton(
-            onPressed: () => Navigator.pushNamed(context, title == 'نشان‌شده‌ها' ? '/favorites' : '/applied-jobs'),
-            child: const Text('مشاهده همه', style: TextStyle(fontFamily: 'Vazir', fontSize: 12)),
-          ),
-        ]),
+        Row(
+          textDirection: TextDirection.rtl,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(title, style: AppTypography.h4),
+            TextButton(
+              onPressed: () => Navigator.pushNamed(context, route),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'مشاهده همه',
+                    style: TextStyle(
+                      fontFamily: AppTypography.fontFamily,
+                      fontSize: 12,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  SizedBox(width: 2),
+                  Icon(Icons.chevron_left, size: 16, color: AppColors.primary),
+                ],
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: 8),
-        ...jobs.take(3).map((job) => JobCard(
-          job: job,
-          isFavorited: _jobPresenter.isFavorited(job.id),
-          onTap: () async {
-            await Navigator.pushNamed(context, '/job-detail', arguments: job.id);
-            setState(() {});
-          },
-          onFavoriteTap: () => _jobPresenter.toggleFavorite(job.id),
+        ...jobs.take(3).map((job) => Padding(
+          padding: const EdgeInsets.only(bottom: 4),
+          child: JobCard(
+            job: job,
+            isFavorited: _jobPresenter.isFavorited(job.id),
+            onTap: () async {
+              await Navigator.pushNamed(context, '/job-detail', arguments: job.id);
+              setState(() {});
+            },
+            onFavoriteTap: () => _jobPresenter.toggleFavorite(job.id),
+          ),
         )),
       ]),
     );
@@ -224,11 +365,18 @@ class _ProfileScreenState extends State<ProfileScreen> implements ProfileView, J
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('خروج از حساب', style: TextStyle(fontFamily: 'Vazir')),
-        content: const Text('آیا از خروج خود مطمئن هستید؟', style: TextStyle(fontFamily: 'Vazir')),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+        title: const Text('خروج از حساب', style: TextStyle(fontFamily: AppTypography.fontFamily)),
+        content: const Text('آیا از خروج خود مطمئن هستید؟', style: TextStyle(fontFamily: AppTypography.fontFamily)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazir'))),
-          TextButton(onPressed: () { Navigator.pop(ctx); _authPresenter.logout(); }, child: const Text('خروج', style: TextStyle(fontFamily: 'Vazir', color: Color(0xFFE74C3C)))),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('انصراف', style: TextStyle(fontFamily: AppTypography.fontFamily)),
+          ),
+          TextButton(
+            onPressed: () { Navigator.pop(ctx); _authPresenter.logout(); },
+            child: const Text('خروج', style: TextStyle(fontFamily: AppTypography.fontFamily, color: AppColors.error)),
+          ),
         ],
       ),
     );
@@ -256,9 +404,10 @@ class _ProfileScreenState extends State<ProfileScreen> implements ProfileView, J
   void onLogoutSuccess() { if (mounted) Navigator.pushReplacementNamed(context, '/login'); }
   @override
   void onLogoutError(String message) {
-    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), backgroundColor: const Color(0xFFE74C3C)));
+    if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message, style: const TextStyle(fontFamily: AppTypography.fontFamily)), backgroundColor: AppColors.error),
+    );
   }
-
   @override
   void onJobsLoaded(List<Job> jobs) {}
   @override
@@ -280,11 +429,11 @@ class _ProfileScreenState extends State<ProfileScreen> implements ProfileView, J
         content: Row(children: [
           Icon(isFav ? Icons.bookmark : Icons.bookmark_border, color: Colors.white, size: 18),
           const SizedBox(width: 8),
-          Expanded(child: Text(msg, style: const TextStyle(fontFamily: 'Vazir'))),
+          Expanded(child: Text(msg, style: const TextStyle(fontFamily: AppTypography.fontFamily))),
         ]),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        backgroundColor: isFav ? const Color(0xFF4A90D9) : const Color(0xFF6C757D),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.sm)),
+        backgroundColor: isFav ? AppColors.primary : AppColors.textMuted,
         duration: const Duration(seconds: 2),
       ));
     }
