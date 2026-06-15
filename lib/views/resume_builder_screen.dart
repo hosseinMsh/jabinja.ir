@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/constants.dart';
 
 class ResumeBuilderScreen extends StatefulWidget {
   const ResumeBuilderScreen({super.key});
@@ -32,13 +33,13 @@ class _ResumeBuilderScreenState extends State<ResumeBuilderScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('رزومه‌ساز', style: TextStyle(fontFamily: 'Vazir', fontSize: 18, fontWeight: FontWeight.bold)),
+        title: const Text('رزومه‌ساز'),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         elevation: 0,
-        foregroundColor: const Color(0xFF212529),
+        foregroundColor: AppColors.textPrimary,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -60,13 +61,14 @@ class _ResumeBuilderScreenState extends State<ResumeBuilderScreen> {
       padding: const EdgeInsets.all(20),
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.border, width: 0.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          const Text('تکمیل رزومه', style: TextStyle(fontFamily: 'Vazir', fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF212529))),
+          const Text('تکمیل رزومه', style: AppTypography.h4),
           const SizedBox(height: 16),
           Row(
             textDirection: TextDirection.rtl,
@@ -93,13 +95,20 @@ class _ResumeBuilderScreenState extends State<ResumeBuilderScreen> {
         Container(
           width: 36, height: 36,
           decoration: BoxDecoration(
-            color: isActive ? const Color(0xFF4A90D9) : const Color(0xFFE9ECEF),
+            color: isActive ? AppColors.primary : AppColors.border,
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, size: 18, color: isActive ? Colors.white : const Color(0xFFADB5BD)),
+          child: Icon(icon, size: 18, color: isActive ? Colors.white : AppColors.textMuted),
         ),
         const SizedBox(height: 4),
-        Text(label, style: TextStyle(fontFamily: 'Vazir', fontSize: 10, color: isActive ? const Color(0xFF4A90D9) : const Color(0xFFADB5BD))),
+        Text(
+          label,
+          style: TextStyle(
+            fontFamily: AppTypography.fontFamily,
+            fontSize: 10,
+            color: isActive ? AppColors.primary : AppColors.textMuted,
+          ),
+        ),
       ],
     );
   }
@@ -109,7 +118,7 @@ class _ResumeBuilderScreenState extends State<ResumeBuilderScreen> {
       child: Container(
         height: 2,
         margin: const EdgeInsets.only(bottom: 20),
-        color: index < _currentStep ? const Color(0xFF4A90D9) : const Color(0xFFE9ECEF),
+        color: index < _currentStep ? AppColors.primary : AppColors.border,
       ),
     );
   }
@@ -127,9 +136,13 @@ class _ResumeBuilderScreenState extends State<ResumeBuilderScreen> {
   Widget _buildPersonalInfo() {
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.border, width: 0.5),
+      ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-        const Text('اطلاعات شخصی', style: TextStyle(fontFamily: 'Vazir', fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF212529))),
+        const Text('اطلاعات شخصی', style: AppTypography.h4),
         const SizedBox(height: 20),
         TextFormField(
           controller: _nameController,
@@ -160,7 +173,11 @@ class _ResumeBuilderScreenState extends State<ResumeBuilderScreen> {
           decoration: _inputDecoration('درباره من (خلاصه)', Icons.info_outline),
         ),
         const SizedBox(height: 24),
-        _buildNextButton(),
+        _buildPrimaryButton('مرحله بعد', () {
+          if (_formKey.currentState!.validate()) {
+            setState(() => _currentStep++);
+          }
+        }),
       ]),
     );
   }
@@ -168,28 +185,31 @@ class _ResumeBuilderScreenState extends State<ResumeBuilderScreen> {
   Widget _buildEducation() {
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.border, width: 0.5),
+      ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
         Row(textDirection: TextDirection.rtl, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          const Text('تحصیلات', style: TextStyle(fontFamily: 'Vazir', fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF212529))),
+          const Text('تحصیلات', style: AppTypography.h4),
           TextButton.icon(
             onPressed: _addEducation,
             icon: const Icon(Icons.add, size: 18),
-            label: const Text('افزودن', style: TextStyle(fontFamily: 'Vazir', fontSize: 13)),
+            label: const Text('افزودن', style: TextStyle(fontFamily: AppTypography.fontFamily, fontSize: 13)),
           ),
         ]),
         const SizedBox(height: 12),
         if (_educations.isEmpty)
-          const Center(child: Padding(
-            padding: EdgeInsets.all(24),
-            child: Text('تحصیلی ثبت نشده', style: TextStyle(fontFamily: 'Vazir', fontSize: 14, color: Color(0xFFADB5BD))),
+          Center(child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text('تحصیلی ثبت نشده', style: AppTypography.body.copyWith(color: AppColors.textMuted)),
           )),
         ..._educations.asMap().entries.map((e) => _buildEducationCard(e.key, e.value)),
         const SizedBox(height: 16),
         Row(textDirection: TextDirection.rtl, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          TextButton(onPressed: () => setState(() => _currentStep--), child: const Text('مرحله قبل', style: TextStyle(fontFamily: 'Vazir'))),
-          ElevatedButton(onPressed: () => setState(() => _currentStep++), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF4A90D9), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-            child: const Text('مرحله بعد', style: TextStyle(fontFamily: 'Vazir'))),
+          TextButton(onPressed: () => setState(() => _currentStep--), child: const Text('مرحله قبل', style: TextStyle(fontFamily: AppTypography.fontFamily))),
+          _buildPrimaryButton('مرحله بعد', () => setState(() => _currentStep++)),
         ]),
       ]),
     );
@@ -203,7 +223,8 @@ class _ResumeBuilderScreenState extends State<ResumeBuilderScreen> {
         final fieldCtrl = TextEditingController();
         final uniCtrl = TextEditingController();
         return AlertDialog(
-          title: const Text('افزودن تحصیلات', style: TextStyle(fontFamily: 'Vazir')),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+          title: const Text('افزودن تحصیلات', style: TextStyle(fontFamily: AppTypography.fontFamily)),
           content: Column(mainAxisSize: MainAxisSize.min, children: [
             TextField(controller: degreeCtrl, textDirection: TextDirection.rtl, decoration: _inputDecoration('مقطع تحصیلی', null)),
             const SizedBox(height: 12),
@@ -212,11 +233,11 @@ class _ResumeBuilderScreenState extends State<ResumeBuilderScreen> {
             TextField(controller: uniCtrl, textDirection: TextDirection.rtl, decoration: _inputDecoration('دانشگاه', null)),
           ]),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazir'))),
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('انصراف', style: TextStyle(fontFamily: AppTypography.fontFamily))),
             ElevatedButton(onPressed: () {
               setState(() => _educations.add({'degree': degreeCtrl.text, 'field': fieldCtrl.text, 'university': uniCtrl.text}));
               Navigator.pop(ctx);
-            }, child: const Text('ذخیره', style: TextStyle(fontFamily: 'Vazir'))),
+            }, child: const Text('ذخیره', style: TextStyle(fontFamily: AppTypography.fontFamily))),
           ],
         );
       },
@@ -224,12 +245,31 @@ class _ResumeBuilderScreenState extends State<ResumeBuilderScreen> {
   }
 
   Widget _buildEducationCard(int index, Map<String, dynamic> edu) {
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        title: Text('${edu['degree']} - ${edu['field']}', style: const TextStyle(fontFamily: 'Vazir', fontSize: 14), textAlign: TextAlign.right),
-        subtitle: Text(edu['university'] ?? '', style: const TextStyle(fontFamily: 'Vazir', fontSize: 12), textAlign: TextAlign.right),
-        trailing: IconButton(icon: const Icon(Icons.delete_outline, color: Color(0xFFE74C3C)), onPressed: () => setState(() => _educations.removeAt(index))),
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
+      child: Row(
+        textDirection: TextDirection.rtl,
+        children: [
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+              Text(
+                '${edu['degree']} - ${edu['field']}',
+                style: AppTypography.bodySmall.copyWith(fontWeight: FontWeight.w600),
+                textAlign: TextAlign.right,
+              ),
+              Text(edu['university'] ?? '', style: AppTypography.caption, textAlign: TextAlign.right),
+            ]),
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete_outline, color: AppColors.error, size: 20),
+            onPressed: () => setState(() => _educations.removeAt(index)),
+          ),
+        ],
       ),
     );
   }
@@ -237,28 +277,31 @@ class _ResumeBuilderScreenState extends State<ResumeBuilderScreen> {
   Widget _buildExperience() {
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.border, width: 0.5),
+      ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
         Row(textDirection: TextDirection.rtl, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          const Text('سوابق شغلی', style: TextStyle(fontFamily: 'Vazir', fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF212529))),
+          const Text('سوابق شغلی', style: AppTypography.h4),
           TextButton.icon(
             onPressed: _addExperience,
             icon: const Icon(Icons.add, size: 18),
-            label: const Text('افزودن', style: TextStyle(fontFamily: 'Vazir', fontSize: 13)),
+            label: const Text('افزودن', style: TextStyle(fontFamily: AppTypography.fontFamily, fontSize: 13)),
           ),
         ]),
         const SizedBox(height: 12),
         if (_experiences.isEmpty)
-          const Center(child: Padding(
-            padding: EdgeInsets.all(24),
-            child: Text('سابقه شغلی ثبت نشده', style: TextStyle(fontFamily: 'Vazir', fontSize: 14, color: Color(0xFFADB5BD))),
+          Center(child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text('سابقه شغلی ثبت نشده', style: AppTypography.body.copyWith(color: AppColors.textMuted)),
           )),
         ..._experiences.asMap().entries.map((e) => _buildExperienceCard(e.key, e.value)),
         const SizedBox(height: 16),
         Row(textDirection: TextDirection.rtl, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          TextButton(onPressed: () => setState(() => _currentStep--), child: const Text('مرحله قبل', style: TextStyle(fontFamily: 'Vazir'))),
-          ElevatedButton(onPressed: () => setState(() => _currentStep++), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF4A90D9), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-            child: const Text('مرحله بعد', style: TextStyle(fontFamily: 'Vazir'))),
+          TextButton(onPressed: () => setState(() => _currentStep--), child: const Text('مرحله قبل', style: TextStyle(fontFamily: AppTypography.fontFamily))),
+          _buildPrimaryButton('مرحله بعد', () => setState(() => _currentStep++)),
         ]),
       ]),
     );
@@ -271,18 +314,19 @@ class _ResumeBuilderScreenState extends State<ResumeBuilderScreen> {
         final companyCtrl = TextEditingController();
         final positionCtrl = TextEditingController();
         return AlertDialog(
-          title: const Text('افزودن سابقه شغلی', style: TextStyle(fontFamily: 'Vazir')),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+          title: const Text('افزودن سابقه شغلی', style: TextStyle(fontFamily: AppTypography.fontFamily)),
           content: Column(mainAxisSize: MainAxisSize.min, children: [
             TextField(controller: companyCtrl, textDirection: TextDirection.rtl, decoration: _inputDecoration('نام شرکت', null)),
             const SizedBox(height: 12),
             TextField(controller: positionCtrl, textDirection: TextDirection.rtl, decoration: _inputDecoration('سمت', null)),
           ]),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazir'))),
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('انصراف', style: TextStyle(fontFamily: AppTypography.fontFamily))),
             ElevatedButton(onPressed: () {
               setState(() => _experiences.add({'company': companyCtrl.text, 'position': positionCtrl.text}));
               Navigator.pop(ctx);
-            }, child: const Text('ذخیره', style: TextStyle(fontFamily: 'Vazir'))),
+            }, child: const Text('ذخیره', style: TextStyle(fontFamily: AppTypography.fontFamily))),
           ],
         );
       },
@@ -290,12 +334,27 @@ class _ResumeBuilderScreenState extends State<ResumeBuilderScreen> {
   }
 
   Widget _buildExperienceCard(int index, Map<String, dynamic> exp) {
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        title: Text(exp['position'] ?? '', style: const TextStyle(fontFamily: 'Vazir', fontSize: 14), textAlign: TextAlign.right),
-        subtitle: Text(exp['company'] ?? '', style: const TextStyle(fontFamily: 'Vazir', fontSize: 12), textAlign: TextAlign.right),
-        trailing: IconButton(icon: const Icon(Icons.delete_outline, color: Color(0xFFE74C3C)), onPressed: () => setState(() => _experiences.removeAt(index))),
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
+      child: Row(
+        textDirection: TextDirection.rtl,
+        children: [
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+              Text(exp['position'] ?? '', style: AppTypography.bodySmall.copyWith(fontWeight: FontWeight.w600), textAlign: TextAlign.right),
+              Text(exp['company'] ?? '', style: AppTypography.caption, textAlign: TextAlign.right),
+            ]),
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete_outline, color: AppColors.error, size: 20),
+            onPressed: () => setState(() => _experiences.removeAt(index)),
+          ),
+        ],
       ),
     );
   }
@@ -304,9 +363,13 @@ class _ResumeBuilderScreenState extends State<ResumeBuilderScreen> {
     final skillCtrl = TextEditingController();
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.border, width: 0.5),
+      ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-        const Text('مهارت‌ها', style: TextStyle(fontFamily: 'Vazir', fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF212529))),
+        const Text('مهارت‌ها', style: AppTypography.h4),
         const SizedBox(height: 16),
         Row(
           children: [
@@ -314,7 +377,7 @@ class _ResumeBuilderScreenState extends State<ResumeBuilderScreen> {
               child: TextField(
                 controller: skillCtrl,
                 textDirection: TextDirection.rtl,
-                decoration: _inputDecoration('مهارت جدید', null),
+                decoration: _inputDecoration('مهارت جدید', Icons.psychology_outlined),
                 onSubmitted: (v) {
                   if (v.isNotEmpty) {
                     setState(() => _skills.add(v));
@@ -324,14 +387,21 @@ class _ResumeBuilderScreenState extends State<ResumeBuilderScreen> {
               ),
             ),
             const SizedBox(width: 8),
-            IconButton(
-              icon: const Icon(Icons.add_circle, color: Color(0xFF4A90D9)),
-              onPressed: () {
-                if (skillCtrl.text.isNotEmpty) {
-                  setState(() => _skills.add(skillCtrl.text));
-                  skillCtrl.clear();
-                }
-              },
+            Container(
+              width: 46, height: 46,
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.add, color: Colors.white),
+                onPressed: () {
+                  if (skillCtrl.text.isNotEmpty) {
+                    setState(() => _skills.add(skillCtrl.text));
+                    skillCtrl.clear();
+                  }
+                },
+              ),
             ),
           ],
         ),
@@ -340,65 +410,83 @@ class _ResumeBuilderScreenState extends State<ResumeBuilderScreen> {
           spacing: 8, runSpacing: 8,
           textDirection: TextDirection.rtl,
           children: _skills.map((s) => Chip(
-            label: Text(s, style: const TextStyle(fontFamily: 'Vazir', fontSize: 12)),
+            label: Text(s, style: const TextStyle(fontFamily: AppTypography.fontFamily, fontSize: 12)),
             deleteIcon: const Icon(Icons.close, size: 16),
             onDeleted: () => setState(() => _skills.remove(s)),
-            backgroundColor: const Color(0xFFE8F0FE),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            backgroundColor: AppColors.primaryLight,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.sm)),
           )).toList(),
         ),
         if (_skills.isEmpty)
-          const Center(child: Padding(
-            padding: EdgeInsets.all(24),
-            child: Text('مهارتی ثبت نشده', style: TextStyle(fontFamily: 'Vazir', fontSize: 14, color: Color(0xFFADB5BD))),
+          Center(child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text('مهارتی ثبت نشده', style: AppTypography.body.copyWith(color: AppColors.textMuted)),
           )),
         const SizedBox(height: 24),
-        Row(textDirection: TextDirection.rtl, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          TextButton(onPressed: () => setState(() => _currentStep--), child: const Text('مرحله قبل', style: TextStyle(fontFamily: 'Vazir'))),
-          ElevatedButton(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                content: const Text('رزومه با موفقیت ساخته شد', style: TextStyle(fontFamily: 'Vazir')),
-                backgroundColor: const Color(0xFF27AE60),
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ));
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF27AE60), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-            child: const Text('ذخیره رزومه', style: TextStyle(fontFamily: 'Vazir', fontWeight: FontWeight.bold)),
-          ),
-        ]),
+        Row(
+          textDirection: TextDirection.rtl,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            TextButton(onPressed: () => setState(() => _currentStep--), child: const Text('مرحله قبل', style: TextStyle(fontFamily: AppTypography.fontFamily))),
+            ElevatedButton(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: const Text('رزومه با موفقیت ساخته شد', style: TextStyle(fontFamily: AppTypography.fontFamily)),
+                  backgroundColor: AppColors.success,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.sm)),
+                ));
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.success,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+              ),
+              child: const Text('ذخیره رزومه', style: TextStyle(fontFamily: AppTypography.fontFamily, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
       ]),
     );
   }
 
-  Widget _buildNextButton() {
-    return ElevatedButton(
-      onPressed: () {
-        if (_formKey.currentState!.validate()) {
-          setState(() => _currentStep++);
-        }
-      },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF4A90D9),
-        foregroundColor: Colors.white,
-        minimumSize: const Size(double.infinity, 50),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+  Widget _buildPrimaryButton(String text, VoidCallback onPressed) {
+    return SizedBox(
+      width: double.infinity,
+      height: 50,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+          elevation: 0,
+        ),
+        child: Text(text, style: const TextStyle(fontFamily: AppTypography.fontFamily, fontSize: 16, fontWeight: FontWeight.bold)),
       ),
-      child: const Text('مرحله بعد', style: TextStyle(fontFamily: 'Vazir', fontSize: 16, fontWeight: FontWeight.bold)),
     );
   }
 
   InputDecoration _inputDecoration(String label, IconData? icon) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(fontFamily: 'Vazir', color: Color(0xFF6C757D)),
+      labelStyle: const TextStyle(fontFamily: AppTypography.fontFamily, color: AppColors.textSecondary),
       filled: true,
-      fillColor: const Color(0xFFF8F9FA),
-      prefixIcon: icon != null ? Icon(icon, color: const Color(0xFFADB5BD)) : null,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFDEE2E6))),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFDEE2E6))),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF4A90D9), width: 2)),
+      fillColor: AppColors.background,
+      prefixIcon: icon != null ? Icon(icon, color: AppColors.textMuted) : null,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderSide: const BorderSide(color: AppColors.border),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderSide: const BorderSide(color: AppColors.border),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderSide: const BorderSide(color: AppColors.primary, width: 2),
+      ),
     );
   }
 }
