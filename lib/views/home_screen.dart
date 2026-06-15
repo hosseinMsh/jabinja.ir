@@ -5,6 +5,8 @@ import '../models/job.dart';
 import '../models/job_filter.dart';
 import '../widgets/job_card.dart';
 import '../widgets/loading_widget.dart';
+import '../widgets/jobinja_logo.dart';
+import '../utils/constants.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -26,6 +28,8 @@ class _HomeScreenState extends State<HomeScreen> implements JobView {
   String? _selectedLocation;
   String? _selectedContractType;
   bool _showFilters = false;
+
+  int _currentNavIndex = 0;
 
   static const List<Map<String, String>> categories = [
     {'name': 'همه', 'id': ''},
@@ -82,136 +86,214 @@ class _HomeScreenState extends State<HomeScreen> implements JobView {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text(
-          'جابینجا',
-          style: TextStyle(fontFamily: 'Vazir', fontSize: 20, fontWeight: FontWeight.bold),
-        ),
+        title: const JobinjaIcon(size: 28),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         elevation: 0,
-        foregroundColor: const Color(0xFF212529),
+        foregroundColor: AppColors.textPrimary,
         actions: [
           IconButton(
-            icon: const Icon(Icons.tune),
-            onPressed: () => setState(() => _showFilters = !_showFilters),
+            icon: const Icon(Icons.notifications_outlined, color: AppColors.textSecondary),
+            onPressed: () {},
           ),
           IconButton(
-            icon: const Icon(Icons.person_outline),
+            icon: const Icon(Icons.person_outline, color: AppColors.textSecondary),
             onPressed: () => Navigator.pushNamed(context, '/profile'),
-          ),
-          Builder(
-            builder: (ctx) => IconButton(
-              icon: const Icon(Icons.menu),
-              onPressed: () => Scaffold.of(ctx).openDrawer(),
-            ),
           ),
         ],
       ),
-      drawer: _buildDrawer(),
       body: Column(
         children: [
-          _buildSearchBar(),
-          if (_showFilters) _buildFilterBar(),
-          _buildTabBar(),
+          _buildSearchSection(),
           Expanded(child: _buildBody()),
         ],
       ),
+      bottomNavigationBar: _buildBottomNav(),
     );
   }
 
-  Widget _buildSearchBar() {
+  Widget _buildBottomNav() {
+    return NavigationBar(
+      selectedIndex: _currentNavIndex,
+      onDestinationSelected: (index) {
+        setState(() => _currentNavIndex = index);
+        switch (index) {
+          case 1:
+            Navigator.pushNamed(context, '/favorites');
+            break;
+          case 2:
+            Navigator.pushNamed(context, '/top-companies');
+            break;
+          case 3:
+            Navigator.pushNamed(context, '/profile');
+            break;
+        }
+      },
+      destinations: const [
+        NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home, color: AppColors.primary), label: 'خانه'),
+        NavigationDestination(icon: Icon(Icons.bookmark_outline), selectedIcon: Icon(Icons.bookmark, color: AppColors.primary), label: 'نشان‌شده'),
+        NavigationDestination(icon: Icon(Icons.business_outlined), selectedIcon: Icon(Icons.business, color: AppColors.primary), label: 'شرکت‌ها'),
+        NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person, color: AppColors.primary), label: 'پروفایل'),
+      ],
+    );
+  }
+
+  Widget _buildSearchSection() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-      color: Colors.white,
-      child: TextField(
-        controller: _searchController,
-        textDirection: TextDirection.rtl,
-        decoration: InputDecoration(
-          hintText: 'عنوان شغلی، مهارت یا شرکت...',
-          hintStyle: const TextStyle(fontFamily: 'Vazir', color: Color(0xFFADB5BD)),
-          prefixIcon: const Icon(Icons.search, color: Color(0xFFADB5BD)),
-          suffixIcon: _searchController.text.isNotEmpty
-              ? IconButton(
-                  icon: const Icon(Icons.clear, color: Color(0xFFADB5BD)),
-                  onPressed: () {
-                    _searchController.clear();
-                    FocusScope.of(context).unfocus();
-                    _applyFilters();
-                  },
-                )
-              : null,
-          filled: true,
-          fillColor: const Color(0xFFF8F9FA),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      color: AppColors.surface,
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    textDirection: TextDirection.rtl,
+                    decoration: InputDecoration(
+                      hintText: 'جستجوی عنوان شغلی، مهارت یا شرکت...',
+                      hintStyle: const TextStyle(fontFamily: AppTypography.fontFamily, fontSize: 13, color: AppColors.textMuted),
+                      prefixIcon: const Icon(Icons.search, color: AppColors.textMuted, size: 22),
+                      suffixIcon: _searchController.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear, color: AppColors.textMuted, size: 18),
+                              onPressed: () {
+                                _searchController.clear();
+                                FocusScope.of(context).unfocus();
+                                _applyFilters();
+                              },
+                            )
+                          : null,
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    style: const TextStyle(fontFamily: AppTypography.fontFamily, fontSize: 14),
+                    onSubmitted: (value) => _applyFilters(),
+                    onChanged: (value) {
+                      setState(() {});
+                      if (value.isEmpty) _applyFilters();
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: _showFilters ? AppColors.primary : AppColors.background,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                child: IconButton(
+                  icon: Icon(
+                    Icons.tune,
+                    color: _showFilters ? AppColors.surface : AppColors.textSecondary,
+                    size: 22,
+                  ),
+                  onPressed: () => setState(() => _showFilters = !_showFilters),
+                ),
+              ),
+            ],
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        ),
-        style: const TextStyle(fontFamily: 'Vazir', fontSize: 14),
-        onSubmitted: (value) => _applyFilters(),
-        onChanged: (value) {
-          if (value.isEmpty) _applyFilters();
-        },
+          if (_showFilters) ...[
+            const SizedBox(height: 10),
+            _buildFilterBar(),
+          ],
+        ],
       ),
     );
   }
 
   Widget _buildFilterBar() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-      color: Colors.white,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: _buildDropdown('دسته‌بندی', _selectedCategory ?? 'همه', categories, (v) {
-                  setState(() => _selectedCategory = v == 'همه' ? '' : v);
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(child: _buildDropdown('دسته‌بندی', _selectedCategory ?? 'همه', categories, (v) {
+              setState(() => _selectedCategory = v == 'همه' ? '' : v);
+              _applyFilters();
+            })),
+            const SizedBox(width: 8),
+            Expanded(child: _buildDropdown('موقعیت', _selectedLocation ?? 'همه استان‌ها', locations, (v) {
+              setState(() => _selectedLocation = v == 'همه استان‌ها' ? '' : v);
+              _applyFilters();
+            })),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(child: _buildDropdown('نوع همکاری', _selectedContractType ?? 'همه', contractTypes, (v) {
+              setState(() => _selectedContractType = v == 'همه' ? '' : v);
+              _applyFilters();
+            })),
+            const SizedBox(width: 8),
+            Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _selectedCategory = null;
+                    _selectedLocation = null;
+                    _selectedContractType = null;
+                  });
                   _applyFilters();
-                }),
+                },
+                child: Container(
+                  height: 42,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.close, size: 16, color: AppColors.error),
+                      SizedBox(width: 4),
+                      Text(
+                        'پاک کردن فیلتر',
+                        style: TextStyle(
+                          fontFamily: AppTypography.fontFamily,
+                          fontSize: 12,
+                          color: AppColors.error,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildDropdown('موقعیت', _selectedLocation ?? 'همه استان‌ها', locations, (v) {
-                  setState(() => _selectedLocation = v == 'همه استان‌ها' ? '' : v);
-                  _applyFilters();
-                }),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildDropdown('نوع همکاری', _selectedContractType ?? 'همه', contractTypes, (v) {
-                  setState(() => _selectedContractType = v == 'همه' ? '' : v);
-                  _applyFilters();
-                }),
-              ),
-            ],
-          ),
-        ],
-      ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
   Widget _buildDropdown(String label, String value, List<Map<String, String>> items, ValueChanged<String> onChanged) {
     return Container(
+      height: 42,
       padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FA),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFDEE2E6)),
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: AppColors.border),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: items.any((e) => e['name'] == value) ? value : items.first['name'],
           isExpanded: true,
-          icon: const Icon(Icons.arrow_drop_down, size: 20),
-          style: const TextStyle(fontFamily: 'Vazir', fontSize: 12, color: Color(0xFF495057)),
+          icon: const Icon(Icons.arrow_drop_down, size: 20, color: AppColors.textSecondary),
+          style: const TextStyle(fontFamily: AppTypography.fontFamily, fontSize: 12, color: AppColors.textPrimary),
           items: items.map((e) => DropdownMenuItem(
             value: e['name'],
-            child: Text(e['name']!, textDirection: TextDirection.rtl),
+            child: Text(e['name']!, textDirection: TextDirection.rtl, style: const TextStyle(fontSize: 12)),
           )).toList(),
           onChanged: (v) { if (v != null) onChanged(v); },
         ),
@@ -219,61 +301,18 @@ class _HomeScreenState extends State<HomeScreen> implements JobView {
     );
   }
 
-  Widget _buildTabBar() {
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          textDirection: TextDirection.rtl,
-          children: [
-            const SizedBox(width: 16),
-            _buildTab('جستجو', true, () {}),
-            _buildTab('درخواست‌های من', false, () => Navigator.pushNamed(context, '/applied-jobs')),
-            _buildTab('نشان‌شده‌ها', false, () => Navigator.pushNamed(context, '/favorites')),
-            _buildTab('۵۰ شرکت برتر', false, () => Navigator.pushNamed(context, '/top-companies')),
-            const SizedBox(width: 16),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTab(String text, bool isActive, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(left: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isActive ? const Color(0xFF4A90D9) : const Color(0xFFF8F9FA),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          text,
-          style: TextStyle(
-            fontFamily: 'Vazir',
-            fontSize: 13,
-            color: isActive ? Colors.white : const Color(0xFF495057),
-            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildBody() {
-    if (_isLoading) {
+    if (_isLoading && _jobs.isEmpty) {
       return const LoadingWidget(message: 'در حال جستجو...');
     }
 
-    if (_errorMessage != null) {
+    if (_errorMessage != null && _jobs.isEmpty) {
       return _buildErrorState();
     }
 
     return RefreshIndicator(
       onRefresh: () async => _presenter.loadJobs(),
+      color: AppColors.primary,
       child: ListView(
         padding: const EdgeInsets.only(bottom: 16),
         children: [
@@ -282,7 +321,35 @@ class _HomeScreenState extends State<HomeScreen> implements JobView {
           if (_topCompanies.isNotEmpty) _buildTopCompaniesCarousel(),
           _buildPopularSearches(),
           _buildHowToStart(),
-          _buildSectionHeader('آخرین آگهی‌ها'),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+            child: Row(
+              textDirection: TextDirection.rtl,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('آخرین آگهی‌ها', style: AppTypography.h4),
+                GestureDetector(
+                  onTap: () {},
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'مشاهده همه',
+                        style: TextStyle(
+                          fontFamily: AppTypography.fontFamily,
+                          fontSize: 12,
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      SizedBox(width: 2),
+                      Icon(Icons.chevron_left, size: 16, color: AppColors.primary),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
           if (_jobs.isEmpty)
             _buildEmptyState()
           else
@@ -305,17 +372,21 @@ class _HomeScreenState extends State<HomeScreen> implements JobView {
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [Color(0xFF4A90D9), Color(0xFF357ABD)]),
-        borderRadius: BorderRadius.circular(16),
+        gradient: const LinearGradient(
+          colors: [AppColors.primary, AppColors.primaryDark],
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+        ),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Row(
         textDirection: TextDirection.rtl,
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _buildStatColumn('۲۰', 'آگهی فعال', Icons.work_outline),
-          Container(width: 1, height: 40, color: Colors.white.withValues(alpha: 0.3)),
+          Container(width: 1, height: 40, color: Colors.white.withValues(alpha: 0.2)),
           _buildStatColumn('۱۲', 'شرکت برتر', Icons.business),
-          Container(width: 1, height: 40, color: Colors.white.withValues(alpha: 0.3)),
+          Container(width: 1, height: 40, color: Colors.white.withValues(alpha: 0.2)),
           _buildStatColumn('۱۰۰%', 'رضایت', Icons.thumb_up_outlined),
         ],
       ),
@@ -328,8 +399,8 @@ class _HomeScreenState extends State<HomeScreen> implements JobView {
       children: [
         Icon(icon, color: Colors.white, size: 22),
         const SizedBox(height: 6),
-        Text(value, style: const TextStyle(fontFamily: 'Vazir', fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
-        Text(label, style: const TextStyle(fontFamily: 'Vazir', fontSize: 11, color: Colors.white70)),
+        Text(value, style: const TextStyle(fontFamily: AppTypography.fontFamily, fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+        Text(label, style: const TextStyle(fontFamily: AppTypography.fontFamily, fontSize: 11, color: Colors.white70)),
       ],
     );
   }
@@ -344,59 +415,92 @@ class _HomeScreenState extends State<HomeScreen> implements JobView {
             textDirection: TextDirection.rtl,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('شغل‌های پیشنهادی', style: TextStyle(fontFamily: 'Vazir', fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF212529))),
-              TextButton(
-                onPressed: () {},
-                child: const Text('مشاهده همه', style: TextStyle(fontFamily: 'Vazir', fontSize: 12)),
+              Text('شغل‌های پیشنهادی', style: AppTypography.h4),
+              GestureDetector(
+                onTap: () {},
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'مشاهده همه',
+                      style: TextStyle(
+                        fontFamily: AppTypography.fontFamily,
+                        fontSize: 12,
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    SizedBox(width: 2),
+                    Icon(Icons.chevron_left, size: 16, color: AppColors.primary),
+                  ],
+                ),
               ),
             ],
           ),
         ),
         SizedBox(
-          height: 180,
+          height: 190,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 12),
             itemCount: _recommendedJobs.length,
             itemBuilder: (context, index) {
               final job = _recommendedJobs[index];
-              return SizedBox(
-                width: 240,
+              return Container(
+                width: 260,
+                margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
                 child: Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  margin: EdgeInsets.zero,
                   child: InkWell(
                     onTap: () async {
                       await Navigator.pushNamed(context, '/job-detail', arguments: job.id);
                       if (mounted) setState(() {});
                     },
-                    borderRadius: BorderRadius.circular(12),
-                    child: Padding(
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    child: Container(
                       padding: const EdgeInsets.all(16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Row(
                             textDirection: TextDirection.rtl,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Container(
-                                width: 40, height: 40,
-                                decoration: BoxDecoration(color: const Color(0xFFE8F0FE), borderRadius: BorderRadius.circular(10)),
+                                width: 44, height: 44,
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryLight,
+                                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                                ),
                                 child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(9),
+                                  borderRadius: BorderRadius.circular(AppRadius.sm - 1),
                                   child: Image.network(
                                     job.company.logoUrl ?? '',
                                     fit: BoxFit.contain,
-                                    errorBuilder: (_, __, ___) => const Icon(Icons.business, color: Color(0xFF4A90D9), size: 24),
+                                    errorBuilder: (_, __, ___) => const Icon(Icons.business, color: AppColors.primary, size: 24),
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 8),
+                              const SizedBox(width: 10),
                               Expanded(
-                                child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                                  Text(job.title, style: const TextStyle(fontFamily: 'Vazir', fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF212529)), maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: TextAlign.right),
-                                  Text(job.company.name, style: const TextStyle(fontFamily: 'Vazir', fontSize: 11, color: Color(0xFF6C757D)), textAlign: TextAlign.right),
-                                ]),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      job.title,
+                                      style: AppTypography.body.copyWith(fontWeight: FontWeight.bold),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      textAlign: TextAlign.right,
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      job.company.name,
+                                      style: AppTypography.bodySmall,
+                                      textAlign: TextAlign.right,
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
@@ -404,20 +508,55 @@ class _HomeScreenState extends State<HomeScreen> implements JobView {
                           Row(
                             textDirection: TextDirection.rtl,
                             children: [
-                              Icon(Icons.location_on_outlined, size: 12, color: const Color(0xFFADB5BD)),
+                              const Icon(Icons.location_on_outlined, size: 14, color: AppColors.textMuted),
                               const SizedBox(width: 4),
                               Expanded(
-                                child: Text(job.location, style: const TextStyle(fontFamily: 'Vazir', fontSize: 11, color: Color(0xFFADB5BD)), overflow: TextOverflow.ellipsis),
+                                child: Text(
+                                  job.location,
+                                  style: AppTypography.caption,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 6),
                           Row(
                             textDirection: TextDirection.rtl,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Icon(Icons.monetization_on_outlined, size: 12, color: const Color(0xFF27AE60)),
-                              const SizedBox(width: 4),
-                              Text(job.salaryDisplay ?? 'حقوق توافقی', style: const TextStyle(fontFamily: 'Vazir', fontSize: 11, color: Color(0xFF27AE60), fontWeight: FontWeight.bold)),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.monetization_on_outlined, size: 14, color: AppColors.success),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    job.salaryDisplay ?? 'حقوق توافقی',
+                                    style: const TextStyle(
+                                      fontFamily: AppTypography.fontFamily,
+                                      fontSize: 11,
+                                      color: AppColors.success,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              if (job.isRemote)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primaryLight,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: const Text(
+                                    'دورکاری',
+                                    style: TextStyle(
+                                      fontFamily: AppTypography.fontFamily,
+                                      fontSize: 10,
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
                             ],
                           ),
                         ],
@@ -443,10 +582,25 @@ class _HomeScreenState extends State<HomeScreen> implements JobView {
             textDirection: TextDirection.rtl,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('شرکت‌های برتر', style: TextStyle(fontFamily: 'Vazir', fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF212529))),
-              TextButton(
-                onPressed: () => Navigator.pushNamed(context, '/top-companies'),
-                child: const Text('مشاهده همه', style: TextStyle(fontFamily: 'Vazir', fontSize: 12)),
+              Text('شرکت‌های برتر', style: AppTypography.h4),
+              GestureDetector(
+                onTap: () => Navigator.pushNamed(context, '/top-companies'),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'مشاهده همه',
+                      style: TextStyle(
+                        fontFamily: AppTypography.fontFamily,
+                        fontSize: 12,
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    SizedBox(width: 2),
+                    Icon(Icons.chevron_left, size: 16, color: AppColors.primary),
+                  ],
+                ),
               ),
             ],
           ),
@@ -465,26 +619,35 @@ class _HomeScreenState extends State<HomeScreen> implements JobView {
                 child: GestureDetector(
                   onTap: () => Navigator.pushNamed(context, '/company', arguments: company.slug),
                   child: Card(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    child: Padding(
+                    margin: EdgeInsets.zero,
+                    child: Container(
                       padding: const EdgeInsets.all(12),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Container(
-                            width: 44, height: 44,
-                            decoration: BoxDecoration(color: const Color(0xFFE8F0FE), borderRadius: BorderRadius.circular(10)),
+                            width: 48, height: 48,
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryLight,
+                              borderRadius: BorderRadius.circular(AppRadius.sm),
+                            ),
                             child: ClipRRect(
-                              borderRadius: BorderRadius.circular(9),
+                              borderRadius: BorderRadius.circular(AppRadius.sm - 1),
                               child: Image.network(
                                 company.logoUrl ?? '',
                                 fit: BoxFit.contain,
-                                errorBuilder: (_, __, ___) => const Icon(Icons.business, color: Color(0xFF4A90D9), size: 26),
+                                errorBuilder: (_, __, ___) => const Icon(Icons.business, color: AppColors.primary, size: 26),
                               ),
                             ),
                           ),
                           const SizedBox(height: 6),
-                          Text(company.name, style: const TextStyle(fontFamily: 'Vazir', fontSize: 11, fontWeight: FontWeight.w500, color: Color(0xFF212529)), maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center),
+                          Text(
+                            company.name,
+                            style: AppTypography.caption.copyWith(fontWeight: FontWeight.w500, color: AppColors.textPrimary),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                          ),
                         ],
                       ),
                     ),
@@ -503,8 +666,9 @@ class _HomeScreenState extends State<HomeScreen> implements JobView {
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.border, width: 0.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -512,9 +676,9 @@ class _HomeScreenState extends State<HomeScreen> implements JobView {
           const Row(
             textDirection: TextDirection.rtl,
             children: [
-              Icon(Icons.trending_up, size: 18, color: Color(0xFF4A90D9)),
+              Icon(Icons.trending_up, size: 18, color: AppColors.primary),
               SizedBox(width: 6),
-              Text('جستجوهای پرطرفدار', style: TextStyle(fontFamily: 'Vazir', fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF212529))),
+              Text('جستجوهای پرطرفدار', style: AppTypography.h4),
             ],
           ),
           const SizedBox(height: 12),
@@ -529,11 +693,11 @@ class _HomeScreenState extends State<HomeScreen> implements JobView {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8F9FA),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFFDEE2E6)),
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.circular(AppRadius.full),
+                  border: Border.all(color: AppColors.border),
                 ),
-                child: Text(tag, style: const TextStyle(fontFamily: 'Vazir', fontSize: 12, color: Color(0xFF495057))),
+                child: Text(tag, style: AppTypography.bodySmall.copyWith(color: AppColors.textPrimary)),
               ),
             )).toList(),
           ),
@@ -547,60 +711,68 @@ class _HomeScreenState extends State<HomeScreen> implements JobView {
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.border, width: 0.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          const Text('از کجا شروع کنم؟', style: TextStyle(fontFamily: 'Vazir', fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF212529))),
+          const Text('از کجا شروع کنم؟', style: AppTypography.h4),
           const SizedBox(height: 16),
-          _buildStepItem(Icons.person_add_outlined, 'ثبت نام در جابینجا', 'با گوگل، لینکدین یا ایمیل ثبت نام کنید'),
-          const Divider(height: 24),
-          _buildStepItem(Icons.description_outlined, 'ساخت یا آپلود رزومه', 'با رزومه‌ساز استاندارد رزومه خود را بسازید'),
-          const Divider(height: 24),
-          _buildStepItem(Icons.search_outlined, 'جستجوی مشاغل', 'عنوان شغلی یا شرکت مورد نظر را جستجو کنید'),
-          const Divider(height: 24),
-          _buildStepItem(Icons.send_outlined, 'ارسال درخواست شغلی', 'برای شغل‌های مورد علاقه رزومه بفرستید'),
+          _buildStepItem(
+            Icons.person_add_outlined,
+            'ثبت نام در جابینجا',
+            'با گوگل، لینکدین یا ایمیل ثبت نام کنید',
+            AppColors.primary,
+          ),
+          const Divider(height: 24, color: AppColors.divider),
+          _buildStepItem(
+            Icons.description_outlined,
+            'ساخت یا آپلود رزومه',
+            'با رزومه‌ساز استاندارد رزومه خود را بسازید',
+            AppColors.accent,
+          ),
+          const Divider(height: 24, color: AppColors.divider),
+          _buildStepItem(
+            Icons.search_outlined,
+            'جستجوی مشاغل',
+            'عنوان شغلی یا شرکت مورد نظر را جستجو کنید',
+            AppColors.amber,
+          ),
+          const Divider(height: 24, color: AppColors.divider),
+          _buildStepItem(
+            Icons.send_outlined,
+            'ارسال درخواست شغلی',
+            'برای شغل‌های مورد علاقه رزومه بفرستید',
+            AppColors.purple,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildStepItem(IconData icon, String title, String subtitle) {
+  Widget _buildStepItem(IconData icon, String title, String subtitle, Color iconColor) {
     return Row(
       textDirection: TextDirection.rtl,
       children: [
         Container(
           width: 44, height: 44,
-          decoration: BoxDecoration(color: const Color(0xFFE8F0FE), borderRadius: BorderRadius.circular(12)),
-          child: Icon(icon, color: const Color(0xFF4A90D9), size: 24),
+          decoration: BoxDecoration(
+            color: iconColor.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
+          child: Icon(icon, color: iconColor, size: 24),
         ),
         const SizedBox(width: 12),
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-            Text(title, style: const TextStyle(fontFamily: 'Vazir', fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF212529))),
-            Text(subtitle, style: const TextStyle(fontFamily: 'Vazir', fontSize: 12, color: Color(0xFF6C757D))),
+            Text(title, style: AppTypography.body.copyWith(fontWeight: FontWeight.w600)),
+            const SizedBox(height: 2),
+            Text(subtitle, style: AppTypography.bodySmall),
           ]),
         ),
       ],
-    );
-  }
-
-  Widget _buildSectionHeader(String title) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-      child: Row(
-        textDirection: TextDirection.rtl,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(title, style: const TextStyle(fontFamily: 'Vazir', fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF212529))),
-          TextButton(
-            onPressed: () {},
-            child: const Text('مشاهده همه', style: TextStyle(fontFamily: 'Vazir', fontSize: 12)),
-          ),
-        ],
-      ),
     );
   }
 
@@ -611,18 +783,25 @@ class _HomeScreenState extends State<HomeScreen> implements JobView {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.cloud_off, size: 64, color: Color(0xFFADB5BD)),
+            Container(
+              width: 80, height: 80,
+              decoration: BoxDecoration(
+                color: AppColors.error.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(AppRadius.xl),
+              ),
+              child: const Icon(Icons.cloud_off, size: 40, color: AppColors.error),
+            ),
             const SizedBox(height: 16),
             Text(
               _errorMessage!,
-              style: const TextStyle(fontFamily: 'Vazir', fontSize: 14, color: Color(0xFF6C757D)),
+              style: AppTypography.body.copyWith(color: AppColors.textSecondary),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
             OutlinedButton.icon(
               onPressed: () => _presenter.loadJobs(),
-              icon: const Icon(Icons.refresh),
-              label: const Text('تلاش مجدد', style: TextStyle(fontFamily: 'Vazir')),
+              icon: const Icon(Icons.refresh, size: 18),
+              label: const Text('تلاش مجدد', style: TextStyle(fontFamily: AppTypography.fontFamily)),
             ),
           ],
         ),
@@ -637,89 +816,22 @@ class _HomeScreenState extends State<HomeScreen> implements JobView {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.search_off, size: 64, color: Color(0xFFADB5BD)),
+            Container(
+              width: 80, height: 80,
+              decoration: BoxDecoration(
+                color: AppColors.primaryLight,
+                borderRadius: BorderRadius.circular(AppRadius.xl),
+              ),
+              child: const Icon(Icons.search_off, size: 40, color: AppColors.textMuted),
+            ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'نتیجه‌ای یافت نشد',
-              style: TextStyle(fontFamily: 'Vazir', fontSize: 14, color: Color(0xFF6C757D)),
+              style: AppTypography.body.copyWith(color: AppColors.textSecondary),
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildDrawer() {
-    return Drawer(
-      child: Container(
-        color: Colors.white,
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            DrawerHeader(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(colors: [Color(0xFF4A90D9), Color(0xFF357ABD)]),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Container(
-                    width: 56, height: 56,
-                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(14)),
-                    child: const Icon(Icons.work_rounded, color: Colors.white, size: 32),
-                  ),
-                  const SizedBox(height: 12),
-                  const Text('جابینجا', style: TextStyle(fontFamily: 'Vazir', fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
-                  const Text('سامانه کاریابی آنلاین', style: TextStyle(fontFamily: 'Vazir', fontSize: 12, color: Colors.white70)),
-                ],
-              ),
-            ),
-            _buildDrawerItem(Icons.search, 'جستجوی مشاغل', () => Navigator.pop(context)),
-            _buildDrawerItem(Icons.description_outlined, 'رزومه‌ساز آنلاین', () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, '/resume-builder');
-            }),
-            _buildDrawerItem(Icons.notifications_outlined, 'ایمیل اطلاع‌رسانی', () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, '/job-alert');
-            }),
-            _buildDrawerItem(Icons.bookmark_outline, 'نشان‌شده‌ها', () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, '/favorites');
-            }),
-            _buildDrawerItem(Icons.send_outlined, 'درخواست‌های من', () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, '/applied-jobs');
-            }),
-            _buildDrawerItem(Icons.business, '۵۰ شرکت برتر', () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, '/top-companies');
-            }),
-            _buildDrawerItem(Icons.help_outline, 'راهنمای استفاده', () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, '/how-to');
-            }),
-            _buildDrawerItem(Icons.headset_mic, 'تماس با جابینجا', () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, '/contact');
-            }),
-            _buildDrawerItem(Icons.person_outline, 'پروفایل', () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, '/profile');
-            }),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDrawerItem(IconData icon, String title, VoidCallback onTap) {
-    return ListTile(
-      trailing: Icon(icon, color: const Color(0xFF6C757D), size: 22),
-      title: Text(title, style: const TextStyle(fontFamily: 'Vazir', fontSize: 14, color: Color(0xFF212529)), textAlign: TextAlign.right),
-      onTap: onTap,
-      dense: true,
     );
   }
 
@@ -771,9 +883,12 @@ class _HomeScreenState extends State<HomeScreen> implements JobView {
       setState(() {});
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(message, style: const TextStyle(fontFamily: 'Vazir')),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          content: Row(children: [
+            Icon(isFavorited ? Icons.bookmark : Icons.bookmark_border, color: Colors.white, size: 18),
+            const SizedBox(width: 8),
+            Expanded(child: Text(message, style: const TextStyle(fontFamily: AppTypography.fontFamily))),
+          ]),
+          backgroundColor: isFavorited ? AppColors.primary : AppColors.textMuted,
           duration: const Duration(seconds: 2),
         ),
       );
