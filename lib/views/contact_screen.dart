@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/custom_button.dart';
+import '../utils/constants.dart';
 
 class ContactScreen extends StatefulWidget {
   const ContactScreen({super.key});
@@ -25,18 +26,20 @@ class _ContactScreenState extends State<ContactScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('تماس با جابینجا', style: TextStyle(fontFamily: 'Vazir', fontSize: 18, fontWeight: FontWeight.bold)),
+        title: const Text('تماس با جابینجا'),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         elevation: 0,
-        foregroundColor: const Color(0xFF212529),
+        foregroundColor: AppColors.textPrimary,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
+            _buildHeaderBanner(),
+            const SizedBox(height: 16),
             _buildInfo(),
             const SizedBox(height: 16),
             _buildForm(),
@@ -46,38 +49,103 @@ class _ContactScreenState extends State<ContactScreen> {
     );
   }
 
-  Widget _buildInfo() {
+  Widget _buildHeaderBanner() {
     return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-        const Row(
-          textDirection: TextDirection.rtl,
-          children: [
-            Icon(Icons.headset_mic, color: Color(0xFF4A90D9), size: 28),
-            SizedBox(width: 8),
-            Text('ارتباط با ما', style: TextStyle(fontFamily: 'Vazir', fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF212529))),
-          ],
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppColors.primary, AppColors.primaryDark],
         ),
-        const SizedBox(height: 16),
-        _buildInfoRow(Icons.email_outlined, 'ایمیل: support@jobinja.ir'),
-        const SizedBox(height: 12),
-        _buildInfoRow(Icons.language_outlined, 'وبلاگ: blog.jobinja.ir'),
-        const SizedBox(height: 12),
-        _buildInfoRow(Icons.camera_alt_outlined, 'اینستاگرام: @myjobinja'),
-        const SizedBox(height: 12),
-        _buildInfoRow(Icons.chat_outlined, 'تلگرام: @jobinja_ir'),
-      ]),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 56, height: 56,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+            ),
+            child: const Icon(Icons.headset_mic, color: Colors.white, size: 28),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'ارتباط با جابینجا',
+            style: TextStyle(
+              fontFamily: AppTypography.fontFamily,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'ما همیشه خوشحال می‌شویم نظرات شما را بشنویم',
+            style: TextStyle(
+              fontFamily: AppTypography.fontFamily,
+              fontSize: 13,
+              color: Colors.white70,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String text) {
+  Widget _buildInfo() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.border, width: 0.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          const Row(
+            textDirection: TextDirection.rtl,
+            children: [
+              Icon(Icons.headset_mic, color: AppColors.primary, size: 24),
+              SizedBox(width: 8),
+              Text('اطلاعات تماس', style: AppTypography.h4),
+            ],
+          ),
+          const SizedBox(height: 20),
+          _buildInfoRow(Icons.email_outlined, 'ایمیل', 'support@jobinja.ir'),
+          const SizedBox(height: 12),
+          _buildInfoRow(Icons.language_outlined, 'وبلاگ', 'blog.jobinja.ir'),
+          const SizedBox(height: 12),
+          _buildInfoRow(Icons.camera_alt_outlined, 'اینستاگرام', '@myjobinja'),
+          const SizedBox(height: 12),
+          _buildInfoRow(Icons.chat_outlined, 'تلگرام', '@jobinja_ir'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String label, String value) {
     return Row(
       textDirection: TextDirection.rtl,
       children: [
-        Icon(icon, size: 18, color: const Color(0xFF4A90D9)),
-        const SizedBox(width: 8),
-        Text(text, style: const TextStyle(fontFamily: 'Vazir', fontSize: 14, color: Color(0xFF495057))),
+        Container(
+          width: 36, height: 36,
+          decoration: BoxDecoration(
+            color: AppColors.primaryLight,
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+          ),
+          child: Icon(icon, size: 18, color: AppColors.primary),
+        ),
+        const SizedBox(width: 12),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(label, style: AppTypography.caption),
+            Text(value, style: AppTypography.body.copyWith(fontWeight: FontWeight.w500)),
+          ],
+        ),
       ],
     );
   }
@@ -85,11 +153,15 @@ class _ContactScreenState extends State<ContactScreen> {
   Widget _buildForm() {
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.border, width: 0.5),
+      ),
       child: Form(
         key: _formKey,
         child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-          const Text('ارسال پیام', style: TextStyle(fontFamily: 'Vazir', fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF212529))),
+          const Text('ارسال پیام', style: AppTypography.h4),
           const SizedBox(height: 20),
           TextFormField(
             controller: _nameCtrl,
@@ -103,7 +175,7 @@ class _ContactScreenState extends State<ContactScreen> {
             textDirection: TextDirection.rtl,
             decoration: _input('ایمیل', Icons.email_outlined),
             keyboardType: TextInputType.emailAddress,
-            validator: (v) => (v == null || v.isEmpty) ? 'ایمیل را وارد کنید' : null,
+            validator: (v) => (v == null || v.isEmpty || !v.contains('@')) ? 'ایمیل معتبر وارد کنید' : null,
           ),
           const SizedBox(height: 16),
           TextFormField(
@@ -119,11 +191,14 @@ class _ContactScreenState extends State<ContactScreen> {
             onPressed: () {
               if (_formKey.currentState!.validate()) {
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: const Text('پیام شما با موفقیت ارسال شد', style: TextStyle(fontFamily: 'Vazir')),
-                  backgroundColor: const Color(0xFF27AE60),
+                  content: const Text('پیام شما با موفقیت ارسال شد', style: TextStyle(fontFamily: AppTypography.fontFamily)),
+                  backgroundColor: AppColors.success,
                   behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.sm)),
                 ));
+                _nameCtrl.clear();
+                _emailCtrl.clear();
+                _messageCtrl.clear();
               }
             },
           ),
@@ -135,12 +210,22 @@ class _ContactScreenState extends State<ContactScreen> {
   InputDecoration _input(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(fontFamily: 'Vazir', color: Color(0xFF6C757D)),
-      prefixIcon: Icon(icon, color: const Color(0xFFADB5BD)),
-      filled: true, fillColor: const Color(0xFFF8F9FA),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFDEE2E6))),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFDEE2E6))),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF4A90D9), width: 2)),
+      labelStyle: const TextStyle(fontFamily: AppTypography.fontFamily, color: AppColors.textSecondary),
+      prefixIcon: Icon(icon, color: AppColors.textMuted),
+      filled: true,
+      fillColor: AppColors.background,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderSide: const BorderSide(color: AppColors.border),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderSide: const BorderSide(color: AppColors.border),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderSide: const BorderSide(color: AppColors.primary, width: 2),
+      ),
     );
   }
 }
