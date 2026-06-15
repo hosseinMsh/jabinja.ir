@@ -3,6 +3,8 @@ import '../presenters/auth_presenter.dart';
 import '../models/user.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/custom_button.dart';
+import '../widgets/jobinja_logo.dart';
+import '../utils/constants.dart';
 import '../utils/validators.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -22,6 +24,7 @@ class _SignupScreenState extends State<SignupScreen> implements AuthView {
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
+  bool _agreeTerms = false;
 
   @override
   void initState() {
@@ -41,55 +44,35 @@ class _SignupScreenState extends State<SignupScreen> implements AuthView {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(AppSpacing.xxl),
             child: Form(
               key: _formKey,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE8F0FE),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Icon(
-                      Icons.person_add_rounded,
-                      size: 40,
-                      color: Color(0xFF4A90D9),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'ثبت‌نام در جابینجا',
-                    style: TextStyle(
-                      fontFamily: 'Vazir',
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF212529),
-                    ),
+                  const JobinjaLogo(size: 56, showText: true),
+                  const SizedBox(height: 28),
+                  Text(
+                    'ایجاد حساب کاربری',
+                    style: AppTypography.h1.copyWith(color: AppColors.textPrimary),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'ایجاد حساب کاربری جدید',
-                    style: TextStyle(
-                      fontFamily: 'Vazir',
-                      fontSize: 14,
-                      color: Color(0xFF6C757D),
-                    ),
+                  Text(
+                    'با ثبت‌نام، به هزاران فرصت شغلی دسترسی پیدا کنید',
+                    style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+                    textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 32),
                   CustomTextField(
                     controller: _nameController,
                     labelText: 'نام و نام خانوادگی',
                     hintText: 'نام خود را وارد کنید',
                     validator: Validators.validateName,
-                    prefixIcon: const Icon(Icons.person_outline, color: Color(0xFFADB5BD)),
+                    prefixIcon: const Icon(Icons.person_outline, color: AppColors.textMuted),
                   ),
                   const SizedBox(height: 16),
                   CustomTextField(
@@ -98,7 +81,7 @@ class _SignupScreenState extends State<SignupScreen> implements AuthView {
                     hintText: 'example@email.com',
                     keyboardType: TextInputType.emailAddress,
                     validator: Validators.validateEmail,
-                    prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFFADB5BD)),
+                    prefixIcon: const Icon(Icons.email_outlined, color: AppColors.textMuted),
                   ),
                   const SizedBox(height: 16),
                   CustomTextField(
@@ -107,11 +90,11 @@ class _SignupScreenState extends State<SignupScreen> implements AuthView {
                     hintText: 'حداقل ۶ کاراکتر',
                     obscureText: _obscurePassword,
                     validator: Validators.validatePassword,
-                    prefixIcon: const Icon(Icons.lock_outlined, color: Color(0xFFADB5BD)),
+                    prefixIcon: const Icon(Icons.lock_outlined, color: AppColors.textMuted),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                        color: const Color(0xFFADB5BD),
+                        color: AppColors.textMuted,
                       ),
                       onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                     ),
@@ -125,32 +108,64 @@ class _SignupScreenState extends State<SignupScreen> implements AuthView {
                     validator: (value) => Validators.validatePasswordConfirmation(
                       value, _passwordController.text,
                     ),
-                    prefixIcon: const Icon(Icons.lock_outlined, color: Color(0xFFADB5BD)),
+                    prefixIcon: const Icon(Icons.lock_outlined, color: AppColors.textMuted),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscureConfirm ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                        color: const Color(0xFFADB5BD),
+                        color: AppColors.textMuted,
                       ),
                       onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 16),
+                  Row(
+                    textDirection: TextDirection.rtl,
+                    children: [
+                      SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: Checkbox(
+                          value: _agreeTerms,
+                          onChanged: (v) => setState(() => _agreeTerms = v ?? false),
+                          activeColor: AppColors.primary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'با قوانین و مقررات جابینجا موافقم',
+                          style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
                   CustomButton(
                     text: 'ثبت‌نام',
                     isLoading: _isLoading,
                     onPressed: _handleSignup,
                   ),
-                  const SizedBox(height: 16),
-                  TextButton(
-                    onPressed: () => Navigator.pushReplacementNamed(context, '/login'),
-                    child: const Text(
-                      'قبلاً ثبت‌نام کرده‌اید؟ ورود',
-                      style: TextStyle(
-                        fontFamily: 'Vazir',
-                        fontSize: 14,
-                        color: Color(0xFF4A90D9),
+                  const SizedBox(height: 24),
+                  Row(
+                    textDirection: TextDirection.rtl,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'قبلاً ثبت‌نام کرده‌اید؟',
+                        style: AppTypography.body.copyWith(color: AppColors.textSecondary),
                       ),
-                    ),
+                      const SizedBox(width: 4),
+                      GestureDetector(
+                        onTap: () => Navigator.pushReplacementNamed(context, '/login'),
+                        child: Text(
+                          'ورود',
+                          style: AppTypography.link,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -162,6 +177,15 @@ class _SignupScreenState extends State<SignupScreen> implements AuthView {
   }
 
   void _handleSignup() {
+    if (!_agreeTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('لطفاً قوانین را بپذیرید', style: TextStyle(fontFamily: AppTypography.fontFamily)),
+          backgroundColor: AppColors.warning,
+        ),
+      );
+      return;
+    }
     if (_formKey.currentState!.validate()) {
       _presenter.signup(
         _nameController.text.trim(),
@@ -173,9 +197,7 @@ class _SignupScreenState extends State<SignupScreen> implements AuthView {
 
   @override
   void onSignupSuccess(User user) {
-    if (mounted) {
-      Navigator.pushReplacementNamed(context, '/home');
-    }
+    if (mounted) Navigator.pushReplacementNamed(context, '/home');
   }
 
   @override
@@ -183,10 +205,10 @@ class _SignupScreenState extends State<SignupScreen> implements AuthView {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(message),
-          backgroundColor: const Color(0xFFE74C3C),
+          content: Text(message, style: const TextStyle(fontFamily: AppTypography.fontFamily)),
+          backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.sm)),
         ),
       );
     }
@@ -194,13 +216,10 @@ class _SignupScreenState extends State<SignupScreen> implements AuthView {
 
   @override
   void onLoginSuccess(User user) {}
-
   @override
   void onLoginError(String message) {}
-
   @override
   void onLogoutSuccess() {}
-
   @override
   void onLogoutError(String message) {}
 
