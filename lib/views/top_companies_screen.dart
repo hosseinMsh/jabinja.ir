@@ -3,6 +3,7 @@ import '../presenters/job_presenter.dart';
 import '../models/company.dart';
 import '../models/job.dart';
 import '../widgets/loading_widget.dart';
+import '../utils/constants.dart';
 
 class TopCompaniesScreen extends StatefulWidget {
   const TopCompaniesScreen({super.key});
@@ -27,13 +28,13 @@ class _TopCompaniesScreenState extends State<TopCompaniesScreen> implements JobV
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('۵۰ شرکت برتر', style: TextStyle(fontFamily: 'Vazir', fontSize: 18, fontWeight: FontWeight.bold)),
+        title: const Text('۵۰ شرکت برتر'),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         elevation: 0,
-        foregroundColor: const Color(0xFF212529),
+        foregroundColor: AppColors.textPrimary,
       ),
       body: _buildBody(),
     );
@@ -47,9 +48,16 @@ class _TopCompaniesScreenState extends State<TopCompaniesScreen> implements JobV
         child: Padding(
           padding: const EdgeInsets.all(32),
           child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-            const Icon(Icons.error_outline, size: 64, color: Color(0xFFADB5BD)),
+            Container(
+              width: 72, height: 72,
+              decoration: BoxDecoration(
+                color: AppColors.error.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Icon(Icons.error_outline, size: 40, color: AppColors.error),
+            ),
             const SizedBox(height: 16),
-            Text(_errorMessage!, style: const TextStyle(fontFamily: 'Vazir', fontSize: 14, color: Color(0xFF6C757D)), textAlign: TextAlign.center),
+            Text(_errorMessage!, style: AppTypography.body.copyWith(color: AppColors.textSecondary), textAlign: TextAlign.center),
           ]),
         ),
       );
@@ -60,54 +68,85 @@ class _TopCompaniesScreenState extends State<TopCompaniesScreen> implements JobV
       itemCount: _companies.length,
       itemBuilder: (context, index) {
         final company = _companies[index];
-        return Card(
+        return Container(
           margin: const EdgeInsets.only(bottom: 12),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: InkWell(
-            onTap: () => Navigator.pushNamed(context, '/company', arguments: company.slug),
-            borderRadius: BorderRadius.circular(12),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                textDirection: TextDirection.rtl,
-                children: [
-                  Container(
-                    width: 56, height: 56,
-                    decoration: BoxDecoration(color: const Color(0xFFE8F0FE), borderRadius: BorderRadius.circular(12)),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(11),
-                      child: Image.network(
-                        company.logoUrl ?? '',
-                        fit: BoxFit.contain,
-                        errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.business_rounded, color: Color(0xFF4A90D9), size: 32)),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            border: Border.all(
+              color: index < 3 ? AppColors.primary.withValues(alpha: 0.2) : AppColors.border,
+              width: index < 3 ? 1.5 : 0.5,
+            ),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            child: InkWell(
+              onTap: () => Navigator.pushNamed(context, '/company', arguments: company.slug),
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  textDirection: TextDirection.rtl,
+                  children: [
+                    Container(
+                      width: 56, height: 56,
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryLight,
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(AppRadius.md - 1),
+                        child: Image.network(
+                          company.logoUrl ?? '',
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, __, ___) => const Center(
+                            child: Icon(Icons.business_rounded, color: AppColors.primary, size: 32),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                      Text(company.name, style: const TextStyle(fontFamily: 'Vazir', fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF212529)), textAlign: TextAlign.right),
-                      if (company.industry != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 4),
-                          child: Text(company.industry!, style: const TextStyle(fontFamily: 'Vazir', fontSize: 13, color: Color(0xFF6C757D)), textAlign: TextAlign.right),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                        Text(
+                          company.name,
+                          style: AppTypography.body.copyWith(fontWeight: FontWeight.bold),
+                          textAlign: TextAlign.right,
                         ),
-                    ]),
-                  ),
-                  Container(
-                    width: 32, height: 32,
-                    decoration: BoxDecoration(
-                      color: index < 3 ? const Color(0xFFFFD700).withAlpha(38) : const Color(0xFFF8F9FA),
-                      borderRadius: BorderRadius.circular(8),
+                        if (company.industry != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
+                              company.industry!,
+                              style: AppTypography.bodySmall,
+                              textAlign: TextAlign.right,
+                            ),
+                          ),
+                      ]),
                     ),
-                    child: Center(
-                      child: Text('${index + 1}', style: TextStyle(
-                        fontFamily: 'Vazir', fontSize: 14, fontWeight: FontWeight.bold,
-                        color: index < 3 ? const Color(0xFFB8860B) : const Color(0xFFADB5BD),
-                      )),
+                    Container(
+                      width: 36, height: 36,
+                      decoration: BoxDecoration(
+                        color: index < 3
+                            ? AppColors.premiumLight.withValues(alpha: 0.3)
+                            : AppColors.background,
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                      ),
+                      child: Center(
+                        child: Text(
+                          '${index + 1}',
+                          style: TextStyle(
+                            fontFamily: AppTypography.fontFamily,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: index < 3 ? AppColors.premiumGold : AppColors.textMuted,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
