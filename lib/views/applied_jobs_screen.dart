@@ -4,6 +4,7 @@ import '../models/company.dart';
 import '../models/job.dart';
 import '../widgets/loading_widget.dart';
 import '../widgets/job_card.dart';
+import '../utils/constants.dart';
 
 class AppliedJobsScreen extends StatefulWidget {
   const AppliedJobsScreen({super.key});
@@ -28,13 +29,13 @@ class _AppliedJobsScreenState extends State<AppliedJobsScreen> implements JobVie
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('درخواست‌های من', style: TextStyle(fontFamily: 'Vazir', fontSize: 18, fontWeight: FontWeight.bold)),
+        title: const Text('درخواست‌های من'),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         elevation: 0,
-        foregroundColor: const Color(0xFF212529),
+        foregroundColor: AppColors.textPrimary,
       ),
       body: _buildBody(),
     );
@@ -48,9 +49,16 @@ class _AppliedJobsScreenState extends State<AppliedJobsScreen> implements JobVie
         child: Padding(
           padding: const EdgeInsets.all(32),
           child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-            const Icon(Icons.error_outline, size: 64, color: Color(0xFFADB5BD)),
+            Container(
+              width: 72, height: 72,
+              decoration: BoxDecoration(
+                color: AppColors.error.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Icon(Icons.error_outline, size: 40, color: AppColors.error),
+            ),
             const SizedBox(height: 16),
-            Text(_errorMessage!, style: const TextStyle(fontFamily: 'Vazir', fontSize: 14, color: Color(0xFF6C757D)), textAlign: TextAlign.center),
+            Text(_errorMessage!, style: AppTypography.body.copyWith(color: AppColors.textSecondary), textAlign: TextAlign.center),
           ]),
         ),
       );
@@ -58,17 +66,35 @@ class _AppliedJobsScreenState extends State<AppliedJobsScreen> implements JobVie
 
     if (_jobs.isEmpty) {
       return Center(
-        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          const Icon(Icons.send_outlined, size: 64, color: Color(0xFFADB5BD)),
-          const SizedBox(height: 16),
-          const Text('هنوز به شغلی رزومه نفرستاده‌اید', style: TextStyle(fontFamily: 'Vazir', fontSize: 14, color: Color(0xFF6C757D))),
-          const SizedBox(height: 8),
-          const Text('با ارسال رزومه برای شغل‌ها، وضعیت آن‌ها را اینجا پیگیری کنید', style: TextStyle(fontFamily: 'Vazir', fontSize: 12, color: Color(0xFFADB5BD))),
-        ]),
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Container(
+              width: 80, height: 80,
+              decoration: BoxDecoration(
+                color: AppColors.primaryLight,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Icon(Icons.send_outlined, size: 40, color: AppColors.primary),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'هنوز به شغلی رزومه نفرستاده‌اید',
+              style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'با ارسال رزومه برای شغل‌ها، وضعیت آن‌ها را اینجا پیگیری کنید',
+              style: AppTypography.bodySmall,
+              textAlign: TextAlign.center,
+            ),
+          ]),
+        ),
       );
     }
 
     return RefreshIndicator(
+      color: AppColors.primary,
       onRefresh: () async => _presenter.loadAppliedJobs(),
       child: ListView.builder(
         padding: const EdgeInsets.only(top: 8, bottom: 16),
@@ -111,11 +137,11 @@ class _AppliedJobsScreenState extends State<AppliedJobsScreen> implements JobVie
         content: Row(children: [
           Icon(isFav ? Icons.bookmark : Icons.bookmark_border, color: Colors.white, size: 18),
           const SizedBox(width: 8),
-          Expanded(child: Text(msg, style: const TextStyle(fontFamily: 'Vazir'))),
+          Expanded(child: Text(msg, style: const TextStyle(fontFamily: AppTypography.fontFamily))),
         ]),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        backgroundColor: isFav ? const Color(0xFF4A90D9) : const Color(0xFF6C757D),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.sm)),
+        backgroundColor: isFav ? AppColors.primary : AppColors.textMuted,
         duration: const Duration(seconds: 2),
       ));
     }
