@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/constants.dart';
 
 class LoadingWidget extends StatelessWidget {
   final String? message;
@@ -11,18 +12,19 @@ class LoadingWidget extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const CircularProgressIndicator(
-            color: Color(0xFF4A90D9),
+          const SizedBox(
+            width: 36,
+            height: 36,
+            child: CircularProgressIndicator(
+              strokeWidth: 3,
+              color: AppColors.primary,
+            ),
           ),
           if (message != null) ...[
             const SizedBox(height: 16),
             Text(
               message!,
-              style: const TextStyle(
-                fontFamily: 'Vazir',
-                fontSize: 14,
-                color: Color(0xFF6C757D),
-              ),
+              style: AppTypography.body.copyWith(color: AppColors.textSecondary),
             ),
           ],
         ],
